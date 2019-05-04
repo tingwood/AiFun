@@ -1,6 +1,7 @@
 from picamera import PiCamera, Color
 from time import sleep
 
+
 camera=PiCamera()
 
 #camera.rotatio=180
