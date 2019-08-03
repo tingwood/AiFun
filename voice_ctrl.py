@@ -4,7 +4,7 @@
 import argparse
 import locale
 import logging
-
+import raspberrypi.pi_actions as pi
 from aiy.board import Board, Led
 from aiy.cloudspeech import CloudSpeechClient
 
@@ -48,6 +48,7 @@ def main():
                 text = text.lower()
                 if 'water flower' in text:
                     logging.info('watering flower')
+                    pi.watering()
                 elif 'goodbye' in text:
                     exit(0)
                 board.led.state = Led.OFF
