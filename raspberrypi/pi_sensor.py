@@ -104,6 +104,7 @@ class InfraredTracker(Sensor):
 class DHT11(Sensor):
     '''
     https://blog.csdn.net/xindoo/article/details/53544699
+    GPIO connect to 'Data' pin
     '''
 
     def __init__(self, pin):
@@ -111,7 +112,7 @@ class DHT11(Sensor):
         super(DHT11, self).__init__(pins)
 
     # return humidity and temperature
-    def getresult(self):
+    def get_hum_temp(self):
         pin = self.pins[0]
         data = []
         GPIO.setup(pin, GPIO.OUT)
@@ -163,10 +164,18 @@ class DHT11(Sensor):
         tmp = humidity + humidity_point + temperature + temperature_point
 
         if check == tmp:
-            print("temperature :", temperature, "*C, humidity:", humidity, "%")
+            # print("temperature :", temperature, "*C, humidity:", humidity, "%")
             return humidity, temperature
         else:
             return 0, 0
+
+    def get_temperature(self):
+        hum, temp = self.get_hum_temp()
+        return temp
+
+    def get_humidity(self):
+        hum, temp = self.get_hum_temp()
+        return hum
 
 
 class Ultrasonic(Sensor):

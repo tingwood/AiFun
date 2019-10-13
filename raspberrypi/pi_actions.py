@@ -30,6 +30,7 @@ def watering():
     GPIO.cleanup()
 
 
+
 def take_pic():
     camera = PiCamera()
     # camera.rotatio=180
