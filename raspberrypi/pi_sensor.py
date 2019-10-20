@@ -2,7 +2,7 @@
 # -*- coding: UTF-8 -*-
 import RPi.GPIO as GPIO
 import time
-
+import _thread as thread
 
 class Sensor:
     '''
@@ -85,7 +85,7 @@ class Relay(Sensor):
         GPIO.output(self.pins[0], GPIO.LOW)
 
 
-class InfraredTracker(Sensor):
+class Tracker(Sensor):
     '''
     Infrared tracker sensor
     if the reflection is strong enough, output GPIO.HIGH
@@ -94,13 +94,81 @@ class InfraredTracker(Sensor):
 
     def __init__(self, pin):
         pins = [pin]
-        super(InfraredTracker, self).__init__(pins)
+        super(Tracker, self).__init__(pins)
         GPIO.setup(self.pins, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
-    def getresult(self):
-        return GPIO.input(self.pins[0])
+    def reflect(self):
+        return True if GPIO.input(self.pins[0])==GPIO.HIGH else False
 
+class DHT111(Sensor):
+    '''
+    https://blog.csdn.net/xindoo/article/details/53544699
+    GPIO connect to 'Data' pin
+    '''
+    t_last=0
+    time_diffs=[]
 
+    def __init__(self, pin):
+        pins = [pin]
+        super(DHT111, self).__init__(pins)        
+        
+    def reset(self):
+        self.time_diffs=[]
+        self.t_last=0
+        
+    def record_time(self,ch):        
+        t=time.time()
+        self.time_diffs.append(t-self.t_last)
+        self.t_last=t
+        
+    # return humidity and temperature
+    def get_hum_temp(self):
+        pin = self.pins[0]
+        self.reset()
+        data = []
+        GPIO.setup(pin, GPIO.OUT, initial=GPIO.HIGH)
+        time.sleep(0.02)
+        GPIO.output(pin, GPIO.LOW)
+        time.sleep(0.02)
+        GPIO.output(pin, GPIO.HIGH)
+        
+        GPIO.setup(pin, GPIO.IN)
+        GPIO.add_event_detect(pin,GPIO.FALLING, callback=self.record_time)
+        time.sleep(1)
+        
+        length=len(self.time_diffs)
+        print ("length is ",length)
+        if length == 43:
+            for t in self.time_diffs[length-40:length]:
+                data.append(1 if t>0.000085 else 0)
+        
+            humidity_bit = data[0:8]
+            humidity_point_bit = data[8:16]
+            temperature_bit = data[16:24]
+            temperature_point_bit = data[24:32]
+            check_bit = data[32:40]
+
+            humidity = 0
+            humidity_point = 0
+            temperature = 0
+            temperature_point = 0
+            check = 0
+            m=[128,64,32,16,8,4,2,1]
+            for i in range(8):
+                humidity += humidity_bit[i] *m[i]
+                humidity_point += humidity_point_bit[i] * m[i]
+                temperature += temperature_bit[i] * m[i]
+                temperature_point += temperature_point_bit[i] * m[i]
+                check += check_bit[i] * m[i]
+
+            tmp = humidity + humidity_point + temperature + temperature_point
+
+            if check == tmp:
+                print("temperature :", temperature, "*C, humidity:", humidity, "%")         
+                return humidity, temperature,True
+        return 0,0,False
+
+        
 class DHT11(Sensor):
     '''
     https://blog.csdn.net/xindoo/article/details/53544699
@@ -115,12 +183,12 @@ class DHT11(Sensor):
     def get_hum_temp(self):
         pin = self.pins[0]
         data = []
-        GPIO.setup(pin, GPIO.OUT)
-        GPIO.output(pin, GPIO.HIGH)
+        GPIO.setup(pin, GPIO.OUT,initial=GPIO.HIGH)
+        time.sleep(0.02)
         GPIO.output(pin, GPIO.LOW)
-        time.sleep(0.04)
+        time.sleep(0.02)
         GPIO.output(pin, GPIO.HIGH)
-
+        
         GPIO.setup(pin, GPIO.IN)
 
         while GPIO.input(pin) == GPIO.LOW:
@@ -165,9 +233,9 @@ class DHT11(Sensor):
 
         if check == tmp:
             # print("temperature :", temperature, "*C, humidity:", humidity, "%")
-            return humidity, temperature
+            return humidity, temperature,True
         else:
-            return 0, 0
+            return 0, 0,False
 
     def get_temperature(self):
         hum, temp = self.get_hum_temp()
@@ -194,7 +262,7 @@ class Ultrasonic(Sensor):
 
     def distance(self):
         GPIO.output(self.pins[0], GPIO.HIGH)
-        time.sleep(0.00001)
+        time.sleep(0.0001)
         GPIO.output(self.pins[0], GPIO.LOW)
         while GPIO.input(self.pins[1]) == GPIO.LOW:
             start_time = time.time()
@@ -227,7 +295,7 @@ class TouchSwitcher(Sensor):
     if touch, the input is GPIO.LOW
     '''
     status = False
-    callback()
+    callback = None
 
     def __init__(self, pin, callback):
         pins = [pin]
@@ -254,20 +322,45 @@ class RGBLed(Sensor):
     '''
     RGB Leb light.
     '''
+    on=False;
 
     def __init__(self, rpin, gpin, bpin):
         pins = [rpin, gpin, bpin]
         super(RGBLed, self).__init__(pins)
         GPIO.setup(self.pins, GPIO.OUT)
+        
+    def red(self):   
+        self.on=True     
+        GPIO.output(self.pins, [1, 0, 0])      
 
-    def red(self):
-        GPIO.output(self.pins, [1, 0, 0])
-
-    def green(self):
+    def green(self):   
+        self.on=True    
         GPIO.output(self.pins, [0, 1, 0])
 
     def blue(self):
+        self.on=True
         GPIO.output(self.pins, [0, 0, 1])
 
-    def turnoff(self):
+    def off(self):
         GPIO.output(self.pins, [0, 0, 0])
+        self.on=False
+        
+    def red_blink(self,on=0.5,off=0.5):
+        thread.start_new_thread(self.blink,(self.pins[0],on,off))
+    
+    def green_blink(self,on=0.5,off=0.5):
+        thread.start_new_thread(self.blink,(self.pins[1],on,off))
+        
+    def blue_blink(self,on=0.5,off=0.5):
+        thread.start_new_thread(self.blink,(self.pins[2],on,off))
+            
+    def blink(self,pin,on,off):
+        self.off()
+        time.sleep(0.5)
+        self.on=True
+        while self.on:
+            GPIO.output(pin, 1)
+            time.sleep(on)
+            GPIO.output(pin, 0)
+            time.sleep(off)
+        
