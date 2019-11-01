@@ -116,10 +116,11 @@ class DHT111(Sensor):
         self.time_diffs=[]
         self.t_last=0
         
-    def record_time(self,ch):        
+    def record_time(self,pin):        
         t=time.time()
         self.time_diffs.append(t-self.t_last)
         self.t_last=t
+        print("detect falling on pin ",pin)
         
     # return humidity and temperature
     def get_hum_temp(self):
@@ -133,7 +134,8 @@ class DHT111(Sensor):
         GPIO.output(pin, GPIO.HIGH)
         
         GPIO.setup(pin, GPIO.IN)
-        GPIO.add_event_detect(pin,GPIO.FALLING, callback=self.record_time)
+        GPIO.add_event_detect(pin,GPIO.FALLING)
+        GPIO.add_event_callback(pin,self.record_time)
         time.sleep(1)
         
         length=len(self.time_diffs)
@@ -183,6 +185,7 @@ class DHT11(Sensor):
     def get_hum_temp(self):
         pin = self.pins[0]
         data = []
+        i = 0
         GPIO.setup(pin, GPIO.OUT,initial=GPIO.HIGH)
         time.sleep(0.02)
         GPIO.output(pin, GPIO.LOW)
@@ -191,25 +194,31 @@ class DHT11(Sensor):
         
         GPIO.setup(pin, GPIO.IN)
 
-        while GPIO.input(pin) == GPIO.LOW:
-            continue
-        while GPIO.input(pin) == GPIO.HIGH:
-            continue
-        i = 0
+        #while GPIO.input(pin) == GPIO.HIGH:
+        #    continue
+        timeout=5000
+        while GPIO.input(pin) == GPIO.LOW and timeout>0:
+            timeout-=1
+        timeout=5000
+        while GPIO.input(pin) == GPIO.HIGH and timeout>0:
+            timeout-=1
+        
         while i < 40:
             cnt = 0
-            while GPIO.input(pin) == GPIO.LOW:
-                continue
+            timeout=5000
+            while GPIO.input(pin) == GPIO.LOW and timeout>0:
+                timeout-=1
             while GPIO.input(pin) == GPIO.HIGH:
                 cnt += 1
-                if cnt > 100:
+                if cnt > 45:
                     break
             if cnt < 12:
                 data.append(0)
             else:
                 data.append(1)
             i += 1
-
+        #data=data[1:41]
+        print(data)
         humidity_bit = data[0:8]
         humidity_point_bit = data[8:16]
         temperature_bit = data[16:24]
@@ -222,15 +231,17 @@ class DHT11(Sensor):
         temperature_point = 0
         check = 0
 
+        m=[128,64,32,16,8,4,2,1]
         for i in range(8):
-            humidity += humidity_bit[i] * 2 ** (7 - i)
-            humidity_point += humidity_point_bit[i] * 2 ** (7 - i)
-            temperature += temperature_bit[i] * 2 ** (7 - i)
-            temperature_point += temperature_point_bit[i] * 2 ** (7 - i)
-            check += check_bit[i] * 2 ** (7 - i)
-
+            humidity += humidity_bit[i] * m[i]
+            humidity_point += humidity_point_bit[i] * m[i]
+            temperature += temperature_bit[i] * m[i]
+            temperature_point += temperature_point_bit[i] * m[i]
+            check += check_bit[i] * m[i]
+                
         tmp = humidity + humidity_point + temperature + temperature_point
-
+        print("temperature :", temperature, "*C, humidity:", humidity, "%", " tp ",temperature_point," hp ",humidity_point," check ",check)
+        
         if check == tmp:
             # print("temperature :", temperature, "*C, humidity:", humidity, "%")
             return humidity, temperature,True

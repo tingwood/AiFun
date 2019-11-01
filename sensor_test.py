@@ -5,15 +5,30 @@ import raspberrypi.pi_sensor as sensor
 import time
 
 
+def test_DHT111():
+    data = []
+    pin =23
+    def cb(pin):
+        print ("detect falling")
+    GPIO.setup(pin, GPIO.OUT, initial=GPIO.HIGH)
+    time.sleep(0.03)
+    GPIO.output(pin, GPIO.LOW)
+    time.sleep(2)
+    GPIO.output(pin, GPIO.HIGH)   
+         
+    GPIO.setup(pin, GPIO.IN)    
+    GPIO.add_event_detect(pin,GPIO.FALLING,callback=cb)
+    time.sleep(1)
+    
+
 def test_DHT11():
-    GPIO.setwarnings(False)
-    GPIO.setmode(GPIO.BCM)
-
-    dht = sensor.DHT111(7)
+    dht = sensor.DHT111(18)
     hum, temp,chk= dht.get_hum_temp()
-
-    print("temperature :", temp, "*C, humidity:", hum, "%")
-    GPIO.cleanup()
+    
+    if chk:
+        print("temperature :", temp, "*C, humidity:", hum, "%")
+    else:
+        print("check false")
 
 def test_relay():
     GPIO.setwarnings(False)
@@ -27,7 +42,7 @@ def test_relay():
     GPIO.cleanup()
 
 def test_RGB():
-    rgb=sensor.RGBLed(4,17,27)
+    rgb=sensor.RGBLed(21,17,27)
     rgb.red_blink(0.8,0.2)
     time.sleep(10)
     rgb.green_blink()
@@ -49,9 +64,10 @@ def test_Ultrasonic():
 def main():
     GPIO.setwarnings(False)
     GPIO.setmode(GPIO.BCM)
+    test_DHT11()
     #test_RGB()
     #test_Tracker()
-    test_Ultrasonic()
+    #test_Ultrasonic()
     GPIO.cleanup()
 
 main()
