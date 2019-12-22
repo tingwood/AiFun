@@ -186,6 +186,7 @@ class DHT11(Sensor):
         pin = self.pins[0]
         data = []
         i = 0
+        
         GPIO.setup(pin, GPIO.OUT,initial=GPIO.HIGH)
         time.sleep(0.02)
         GPIO.output(pin, GPIO.LOW)
@@ -199,10 +200,11 @@ class DHT11(Sensor):
         timeout=5000
         while GPIO.input(pin) == GPIO.LOW and timeout>0:
             timeout-=1
+                    
         timeout=5000
         while GPIO.input(pin) == GPIO.HIGH and timeout>0:
             timeout-=1
-        
+                
         while i < 40:
             cnt = 0
             timeout=5000
@@ -210,21 +212,12 @@ class DHT11(Sensor):
                 timeout-=1
             while GPIO.input(pin) == GPIO.HIGH:
                 cnt += 1
-                if cnt > 45:
+                if cnt > 100:
                     break
-            if cnt < 12:
-                data.append(0)
-            else:
-                data.append(1)
+            data.append(cnt)
             i += 1
-        #data=data[1:41]
-        print(data)
-        humidity_bit = data[0:8]
-        humidity_point_bit = data[8:16]
-        temperature_bit = data[16:24]
-        temperature_point_bit = data[24:32]
-        check_bit = data[32:40]
-
+        #print(data)
+        
         humidity = 0
         humidity_point = 0
         temperature = 0
@@ -232,18 +225,16 @@ class DHT11(Sensor):
         check = 0
 
         m=[128,64,32,16,8,4,2,1]
+        th=15    #threshold
         for i in range(8):
-            humidity += humidity_bit[i] * m[i]
-            humidity_point += humidity_point_bit[i] * m[i]
-            temperature += temperature_bit[i] * m[i]
-            temperature_point += temperature_point_bit[i] * m[i]
-            check += check_bit[i] * m[i]
-                
-        tmp = humidity + humidity_point + temperature + temperature_point
-        print("temperature :", temperature, "*C, humidity:", humidity, "%", " tp ",temperature_point," hp ",humidity_point," check ",check)
+            humidity += (0 if data[i]<th else 1)* m[i]
+            humidity_point += (0 if data[i+8]<th else 1) * m[i]
+            temperature += (0 if data[i+16]<th else 1) * m[i]
+            temperature_point += (0 if data[i+24]<th else 1)  * m[i]
+            check += (0 if data[i+32]<th else 1) * m[i]      
+        #print("temperature :", temperature, "*C, humidity:", humidity, "%", " tp ",temperature_point," hp ",humidity_point," check ",check)
         
-        if check == tmp:
-            # print("temperature :", temperature, "*C, humidity:", humidity, "%")
+        if check == humidity + humidity_point + temperature + temperature_point:
             return humidity, temperature,True
         else:
             return 0, 0,False

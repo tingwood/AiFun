@@ -22,7 +22,7 @@ def test_DHT111():
     
 
 def test_DHT11():
-    dht = sensor.DHT111(18)
+    dht = sensor.DHT11(18)
     hum, temp,chk= dht.get_hum_temp()
     
     if chk:
@@ -58,16 +58,16 @@ def test_Tracker():
         time.sleep(1)
 
 def test_Ultrasonic():
-    sen=sensor.Ultrasonic(27,17)
+    sen=sensor.Ultrasonic(23,18)
     print(sen.distance())
     
 def main():
     GPIO.setwarnings(False)
     GPIO.setmode(GPIO.BCM)
-    test_DHT11()
+    #test_DHT11()
     #test_RGB()
     #test_Tracker()
-    #test_Ultrasonic()
+    test_Ultrasonic()
     GPIO.cleanup()
 
 main()
