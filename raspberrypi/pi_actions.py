@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 import RPi.GPIO as GPIO
-import raspberrypi.pi_sensor as sensor
+import pi_sensor as sensor
 from picamera import PiCamera, Color
 import time
 
@@ -29,8 +29,22 @@ def watering():
     relay.untrigger()
     GPIO.cleanup()
 
-
-
+def get_temp():
+    GPIO.setwarnings(False)
+    GPIO.setmode(GPIO.BCM)
+    
+    dht = sensor.DHT11(18)
+    hum, temp, chk= dht.get_hum_temp()
+    
+    if chk:
+        print("temperature :", temp, "*C, humidity:", hum, "%")
+        GPIO.cleanup()
+        return hum,temp
+    else:
+        GPIO.cleanup()
+        return 0,0
+    
+    
 def take_pic():
     camera = PiCamera()
     # camera.rotatio=180
