@@ -48,7 +48,7 @@ def main():
                 text = text.lower()
                 if 'water flower' in text:
                     logging.info('watering flower')
-                    pi.watering()
+                    #pi.watering()
                 elif 'goodbye' in text:
                     exit(0)
                 board.led.state = Led.OFF
