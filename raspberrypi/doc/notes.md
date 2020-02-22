@@ -22,6 +22,12 @@ sudo apt-get install fcitx fcitx-googlepinyin fcitx-table-wubi
 
 #### install python 3.6
 Refer to https://gist.github.com/dschep/24aa61672a2092246eaca2824400d37f
+#### change pip install source
+sudo vi /etc/pip.conf
+[global]
+index-url = http://mirrors.aliyun.com/pypi/simple/
+[install]
+trusted-host= mirrors.aliyun.com
 
 #### install raspberry gpio
 pip install RPi.GPIO
