@@ -1,10 +1,6 @@
 # -*- coding: UTF-8 -*-
-import urllib.request as http
-from bs4 import BeautifulSoup
 from flask import Flask, request, jsonify
 import json
-import re
-import random
 import logging
 import RPi.GPIO as GPIO
 from fishtank import Fishtank
