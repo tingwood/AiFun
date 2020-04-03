@@ -1,0 +1,13 @@
+*.log
+*.pyc
+.vscode/
+target/
+.settings/
+.classpath
+.factorypath
+.project
+.metadata/
+.idea/
+.ipyng_checkpoints/
+logs/
+venv/
