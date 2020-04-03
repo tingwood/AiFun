@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 import RPi.GPIO as GPIO
 import time
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -27,7 +28,7 @@ class Fishtank:
         self.pins = [lightPin,pumpPin,pumbExtPin,uvPin,heaterPin]
         GPIO.setup(self.pins, GPIO.OUT)
         self.pump_on()
-        # 采用corn的方式
+
         job = self.scheduler.add_job(self.pump_ext_on_comb, 'cron', hour='10')
         self.jobs.append(job)
         job = self.scheduler.add_job(self.pump_ext_off_comb, 'cron', hour='11')
