@@ -3,6 +3,7 @@
 import RPi.GPIO as GPIO
 import time
 import _thread as thread
+import os
 
 class Sensor:
     '''
@@ -14,6 +15,44 @@ class Sensor:
         self.pins = pins
 
 
+class DS18B20(Sensor):
+    '''
+    https://zhuanlan.zhihu.com/p/69890507
+    pi@raspberrypi:~ $ sudo nano /boot/config.txt
+    在dtoverlay=dwc2之前添加一行：
+    dtoverlay=w1-gpio-pullup,gpiopin=4
+    加载2个模块
+    pi@raspberrypi:~ $ sudo modprobe w1-gpio
+    pi@raspberrypi:~ $ sudo modprobe w1-therm
+    查看温度传感器DS18B20设备
+    pi@raspberrypi:~ $ cd /sys/bus/w1/devices/
+    依次在终端输入以下命令：
+    pi@raspberrypi:/sys/bus/w1/devices $ cd 28-000004d618fa
+    pi@raspberrypi:/sys/bus/w1/devices/28-000004d618fa $ cat w1_slave
+    '''
+    serial=''
+    def __init__(self, serial):
+        pins=[0]
+        super(SoilSensor, self).__init__(pins)
+        self.serial=serial
+
+    def get_temperature(self):
+        tfile = open("/sys/bus/w1/devices/"+self.serial+"/w1_slave")
+        # Read all of the text in the file.
+        text = tfile.read()
+        # close the file
+        tfile.close()
+        # Split the text with new lines (\n) and select the second line.
+        secondline = text.split("\n")[1]
+        # Split the line into words, referring to the spaces, and select the 10th word (counting from 0).
+        temperaturedata = secondline.split(" ")[9]
+        # The first two characters are "t=", so get rid of those and convert the temperature from a string to a number.
+        temperature = float(temperaturedata[2:])
+        # Put the decimal point in the right place and display it.
+        temperature = temperature / 1000
+        print temperature
+        return temperature
+        
 class SoilSensor(Sensor):
     '''
     Soil humidity sensor

@@ -14,7 +14,9 @@ logging.basicConfig(filename='./log/info.log',\
 
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
-fishtank = Fishtank(0,4,17,18,27)
+fishtank = Fishtank(0, 4, 17, 18, 27)
+
+
 @app.route('/fishtank', methods=['GET'])
 def get_fishtank_status():
     ret = fishtank.get_status()
@@ -59,4 +61,3 @@ def handleServiceExp(error):
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=18082)  #启动socket
-

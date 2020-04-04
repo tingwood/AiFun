@@ -3,6 +3,7 @@ import RPi.GPIO as GPIO
 import time
 from apscheduler.schedulers.background import BackgroundScheduler
 import logging as log
+from pi_sensor import DS18B20
 
 
 class Fishtank:
@@ -15,7 +16,7 @@ class Fishtank:
     pump_ext_status = 0
     heater_status = 0  #0-off, 1-on
     uv_status = 0
-    temprature = 0  #temp get from sensor
+    temperature = 0  #temp get from sensor
     temp_offset = 0  #temp sensor calibration
     temp_heater_on = 16  #below this temp, heater on
     temp_heater_off = 22  #above this temp, heater off
@@ -23,9 +24,10 @@ class Fishtank:
     pins = [0, 4, 17, 18, 27]
     scheduler = BackgroundScheduler()
     jobs = []
+    temp_sensor = DS18B20('28-01191a61480c')
 
-    def __init__(self, lightPin,pumpPin,pumbExtPin,uvPin,heaterPin):
-        self.pins = [lightPin,pumpPin,pumbExtPin,uvPin,heaterPin]
+    def __init__(self, lightPin, pumpPin, pumbExtPin, uvPin, heaterPin):
+        self.pins = [lightPin, pumpPin, pumbExtPin, uvPin, heaterPin]
         GPIO.setup(self.pins, GPIO.OUT)
         self.pump_on()
 
@@ -141,14 +143,17 @@ class Fishtank:
         self.heater_status = 0
         log.info("heater off")
 
-    def get_temprature(self):
-        temp = self.temprature + self.temp_offset
-        log.info("Current temp is %d", temp)
-        if temp < self.temp_heater_on:
-            log.info("Current temp is lower than %d", self.temp_heater_on)
+    def get_temperature(self):
+        self.temperature = self.temp_sensor.get_temperature()
+        temp = self.temperature + self.temp_offset
+        log.info("Current temperature is %d", temp)
+        if temp < self.temp_heater_on and temp > 0:
+            log.info("Current temperature is lower than %d",
+                     self.temp_heater_on)
             self.heater_on()
         if temp > self.temp_heater_off:
-            log.info("Current temp is higher than %d", self.temp_heater_off)
+            log.info("Current temperature is higher than %d",
+                     self.temp_heater_off)
             self.heater_off()
         return temp
 
@@ -160,7 +165,7 @@ class Fishtank:
         st['uvlight'] = self.uv_status
         st['pump'] = self.pump_status
         st['pump_ext'] = self.pump_ext_status
-        st['temprature'] = self.get_temprature()
+        st['temprature'] = self.get_temperature()
         return st
 
     def pump_ext_on_comb(self):
