@@ -14,7 +14,7 @@ logging.basicConfig(filename='./log/info.log',\
 
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
-fishtank = Fishtank(0, 4, 17, 18, 27)
+fishtank = Fishtank(0, 22, 17, 18, 27)
 
 
 @app.route('/fishtank', methods=['GET'])

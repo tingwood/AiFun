@@ -4,18 +4,20 @@ from flask import Flask, request, jsonify
 import json
 import re
 import random
-import uuid
 import logging
 import time
 
 # import pi_actions as pi
+baseUrl = '/api/shome'
+ip = '0.0.0.0'
+port = 18083
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path=baseUrl)
 
-logging.basicConfig(filename='./log/info.log', \
-                    filemode='w', \
-                    format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s', \
-                    datefmt='%H:%M:%S', \
+logging.basicConfig(filename='./log/info.log',
+                    filemode='w',
+                    format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
+                    datefmt='%H:%M:%S',
                     level=logging.INFO)
 
 
@@ -36,11 +38,25 @@ def test():
     return ""
 
 
+def get_url_arg(req, key):
+    arg = req.args.get(key, None)
+    if arg is None:
+        raise ServiceException("Request error", "Illeagel parameters.")
+    return arg
+
+
+def get_header(req, key):
+    arg = req.headers.get(key, None)
+    if arg is None:
+        raise ServiceException("Request error", "Illeagel header.")
+    return arg
+
+
 iClients = dict()
 
 
 # client register periodical as heartbeat (1s)
-@app.route('/api/shome/clients', methods=['POST'])
+@app.route('/clients', methods=['POST'])
 def activeClient():
     content = request.get_json(silent=True)
     url = content.get('url', None)  # ip:port
@@ -65,21 +81,23 @@ with open('switcher.txt') as jsonfile:
     switchers = json.load(jsonfile)
 
 
-@app.route('/api/shome/switchers/<id>', methods=['POST'])
+@app.route('/switchers/<id>', methods=['POST'])
 def switcherAction(id):
     sw = switchers.get(id, None)
     if sw is None:
-        raise ServiceException("Switcher not Found", payload="Please check switcher ID.")
+        raise ServiceException("Switcher not Found",
+                               payload="Please check switcher ID.")
+
     sw.get('')
-    action = request.args.get('action').strip()
-    if action == 'on' or action=='off':
-        cmd={'dev':id,'cmd':action}
-        sendCommand(clt,cmd)
+    action = get_url_arg(request, 'action').strip()
+    if action == 'on' or action == 'off':
+        cmd = {'dev': id, 'cmd': action}
+        sendCommand(clt, cmd)
     else:
         raise ServiceException("Unsupport actions")
 
 
-@app.route('/api/shome/switchers', methods=['POST'])
+@app.route('/switchers', methods=['POST'])
 def addSwitcher():
     content = request.get_json(silent=True)
     id = content.get('id', None)
@@ -91,7 +109,7 @@ def addSwitcher():
     return jsonify(content)
 
 
-@app.route('/api/shome/switchers/<id>', methods=['PUT'])
+@app.route('/switchers/<id>', methods=['PUT'])
 def updSwitcher(id):
     if id is None or id == '':
         raise ServiceException("Param Error", payload="Missing switcher ID.")
@@ -99,12 +117,13 @@ def updSwitcher(id):
     content['id'] = id
     sw = switchers.get(id, None)
     if sw is None:
-        raise ServiceException("Switcher not Found", payload="Please check switcher ID.")
+        raise ServiceException("Switcher not Found",
+                               payload="Please check switcher ID.")
     switchers[id] = content
     return jsonify(switchers[id])
 
 
-@app.route('/api/shome/switchers', methods=['GET'])
+@app.route('/switchers', methods=['GET'])
 def listSwitchers():
     sws = []
     for value in switchers.values():  # 取出value
@@ -112,17 +131,18 @@ def listSwitchers():
     return jsonify(sws)
 
 
-@app.route('/api/shome/switchers/<id>', methods=['GET'])
+@app.route('/switchers/<id>', methods=['GET'])
 def getSwitcher(id):
     if id is None or id == '':
         raise ServiceException("Param Error", payload="Missing switcher ID.")
     sw = switchers.get(id, None)
     if sw is None:
-        raise ServiceException("Switcher not Found", payload="Please check switcher ID.")
+        raise ServiceException("Switcher not Found",
+                               payload="Please check switcher ID.")
     return jsonify(sw)
 
 
-@app.route('/api/shome/switchers/<id>', methods=['DELETE'])
+@app.route('/switchers/<id>', methods=['DELETE'])
 def delSwitcher(id):
     if id is None or id == '':
         raise ServiceException("Param Error", payload="Missing switcher ID.")
@@ -137,44 +157,6 @@ def sendCommand(iClient, command):
         return True
     else:
         return False
-
-
-@app.route('/book', methods=['GET'])
-def bookByIsbn():
-    isbn = request.args.get('isbn').strip()
-    logging.info(request)
-    if isbn is None:
-        raise ServiceException('Missing parameters.')
-    else:
-        isIsbn = isbnRegex.match(isbn)
-        if isIsbn is None:
-            raise ServiceException('Invalid isbn.')
-
-        ret = {}
-        try:
-            book = doubanCrawler(isbn)
-            # print book
-            ret = dict(ret.items() + book.items())
-        except Exception as e:
-            logging.info('Creep bookinfo from douban failed. Reason as below:')
-            logging.info(e)
-        '''
-        try:
-            book=goodReadsCrawler(isbn)
-            #print book
-            ret=dict(ret.items()+book.items())
-        except Exception as e:
-            logging.info('Creep bookinfo from goodreads failed. Reason as below:')
-            logging.info(e)
-        '''
-        if ret == {}:
-            raise ServiceException("Book not found", status_code=404)
-        return jsonify(ret)
-
-
-def genUuid():
-    id = uuid.uuid1()
-    return str(id).replace("-", "");
 
 
 class ServiceException(Exception):
@@ -201,4 +183,4 @@ def handleServiceExp(error):
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=18083)  # 启动socket
+    app.run(host=ip, port=port)  # 启动socket

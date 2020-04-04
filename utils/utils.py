@@ -1,5 +1,6 @@
 import os
 import time
+import uuid
 from path import Path
 
 dir = r"d:/demo"
@@ -22,3 +23,7 @@ for f in d.walk():
             print(e)
     else:
         pass
+
+def genUuid():
+    id = uuid.uuid1()
+    return str(id).replace("-", "")

@@ -21,7 +21,7 @@ class Fishtank:
     temp_heater_on = 16  #below this temp, heater on
     temp_heater_off = 22  #above this temp, heater off
 
-    pins = [0, 4, 17, 18, 27]
+    pins = []
     scheduler = BackgroundScheduler()
     jobs = []
     temp_sensor = DS18B20('28-01191a61480c')
