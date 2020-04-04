@@ -2,7 +2,6 @@
 # -*- coding: UTF-8 -*-
 import RPi.GPIO as GPIO
 import time
-import _thread as thread
 import os
 
 class Sensor:
@@ -52,7 +51,7 @@ class DS18B20(Sensor):
         temperature = temperature / 1000
         print temperature
         return temperature
-        
+
 class SoilSensor(Sensor):
     '''
     Soil humidity sensor
