@@ -15,7 +15,7 @@ class Sensor:
         self.pins = pins
 
 
-class DS18B20(Sensor):
+class DS18B20():
     '''
     https://zhuanlan.zhihu.com/p/69890507
     pi@raspberrypi:~ $ sudo nano /boot/config.txt
@@ -33,9 +33,7 @@ class DS18B20(Sensor):
     serial = ''
 
     def __init__(self, serial):
-        pins = []
-        self.serial = serial
-        super(DS18B20, self).__init__(pins)
+        self.serial = serial        
 
     def get_temperature(self):
         tfile = open("/sys/bus/w1/devices/" + self.serial + "/w1_slave")
