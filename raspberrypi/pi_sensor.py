@@ -4,6 +4,7 @@ import RPi.GPIO as GPIO
 import time
 import os
 
+
 class Sensor:
     '''
     Sensor base class
@@ -29,14 +30,15 @@ class DS18B20(Sensor):
     pi@raspberrypi:/sys/bus/w1/devices $ cd 28-000004d618fa
     pi@raspberrypi:/sys/bus/w1/devices/28-000004d618fa $ cat w1_slave
     '''
-    serial=''
+    serial = ''
+
     def __init__(self, serial):
-        pins=[0]
-        super(SoilSensor, self).__init__(pins)
-        self.serial=serial
+        pins = []
+        self.serial = serial
+        super(DS18B20, self).__init__(pins)
 
     def get_temperature(self):
-        tfile = open("/sys/bus/w1/devices/"+self.serial+"/w1_slave")
+        tfile = open("/sys/bus/w1/devices/" + self.serial + "/w1_slave")
         # Read all of the text in the file.
         text = tfile.read()
         # close the file
@@ -51,6 +53,7 @@ class DS18B20(Sensor):
         temperature = temperature / 1000
         print temperature
         return temperature
+
 
 class SoilSensor(Sensor):
     '''
@@ -110,7 +113,6 @@ class Relay(Sensor):
     Trigger jumpper：
     A jumpper can be set using GPIO.LOW or GPIO.HIGH to relay trigger
     '''
-
     def __init__(self, pin):
         pins = [pin]
         super(Relay, self).__init__(pins)
@@ -129,37 +131,37 @@ class Tracker(Sensor):
     if the reflection is strong enough, output GPIO.HIGH
     otherwise output GPIO.LOW (e.g. detect black line)
     '''
-
     def __init__(self, pin):
         pins = [pin]
         super(Tracker, self).__init__(pins)
         GPIO.setup(self.pins, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
     def reflect(self):
-        return True if GPIO.input(self.pins[0])==GPIO.HIGH else False
+        return True if GPIO.input(self.pins[0]) == GPIO.HIGH else False
+
 
 class DHT111(Sensor):
     '''
     https://blog.csdn.net/xindoo/article/details/53544699
     GPIO connect to 'Data' pin
     '''
-    t_last=0
-    time_diffs=[]
+    t_last = 0
+    time_diffs = []
 
     def __init__(self, pin):
         pins = [pin]
-        super(DHT111, self).__init__(pins)        
-        
+        super(DHT111, self).__init__(pins)
+
     def reset(self):
-        self.time_diffs=[]
-        self.t_last=0
-        
-    def record_time(self,pin):        
-        t=time.time()
-        self.time_diffs.append(t-self.t_last)
-        self.t_last=t
-        print("detect falling on pin ",pin)
-        
+        self.time_diffs = []
+        self.t_last = 0
+
+    def record_time(self, pin):
+        t = time.time()
+        self.time_diffs.append(t - self.t_last)
+        self.t_last = t
+        print("detect falling on pin ", pin)
+
     # return humidity and temperature
     def get_hum_temp(self):
         pin = self.pins[0]
@@ -170,18 +172,18 @@ class DHT111(Sensor):
         GPIO.output(pin, GPIO.LOW)
         time.sleep(0.02)
         GPIO.output(pin, GPIO.HIGH)
-        
+
         GPIO.setup(pin, GPIO.IN)
-        GPIO.add_event_detect(pin,GPIO.FALLING)
-        GPIO.add_event_callback(pin,self.record_time)
+        GPIO.add_event_detect(pin, GPIO.FALLING)
+        GPIO.add_event_callback(pin, self.record_time)
         time.sleep(1)
-        
-        length=len(self.time_diffs)
-        print ("length is ",length)
+
+        length = len(self.time_diffs)
+        print("length is ", length)
         if length == 43:
-            for t in self.time_diffs[length-40:length]:
-                data.append(1 if t>0.000085 else 0)
-        
+            for t in self.time_diffs[length - 40:length]:
+                data.append(1 if t > 0.000085 else 0)
+
             humidity_bit = data[0:8]
             humidity_point_bit = data[8:16]
             temperature_bit = data[16:24]
@@ -193,9 +195,9 @@ class DHT111(Sensor):
             temperature = 0
             temperature_point = 0
             check = 0
-            m=[128,64,32,16,8,4,2,1]
+            m = [128, 64, 32, 16, 8, 4, 2, 1]
             for i in range(8):
-                humidity += humidity_bit[i] *m[i]
+                humidity += humidity_bit[i] * m[i]
                 humidity_point += humidity_point_bit[i] * m[i]
                 temperature += temperature_bit[i] * m[i]
                 temperature_point += temperature_point_bit[i] * m[i]
@@ -204,17 +206,17 @@ class DHT111(Sensor):
             tmp = humidity + humidity_point + temperature + temperature_point
 
             if check == tmp:
-                print("temperature :", temperature, "*C, humidity:", humidity, "%")         
-                return humidity, temperature,True
-        return 0,0,False
+                print("temperature :", temperature, "*C, humidity:", humidity,
+                      "%")
+                return humidity, temperature, True
+        return 0, 0, False
 
-        
+
 class DHT11(Sensor):
     '''
     https://blog.csdn.net/xindoo/article/details/53544699
     GPIO connect to 'Data' pin
     '''
-
     def __init__(self, pin):
         pins = [pin]
         super(DHT11, self).__init__(pins)
@@ -224,30 +226,30 @@ class DHT11(Sensor):
         pin = self.pins[0]
         data = []
         i = 0
-        
-        GPIO.setup(pin, GPIO.OUT,initial=GPIO.HIGH)
+
+        GPIO.setup(pin, GPIO.OUT, initial=GPIO.HIGH)
         time.sleep(0.02)
         GPIO.output(pin, GPIO.LOW)
         time.sleep(0.02)
         GPIO.output(pin, GPIO.HIGH)
-        
+
         GPIO.setup(pin, GPIO.IN)
 
         #while GPIO.input(pin) == GPIO.HIGH:
         #    continue
-        timeout=5000
-        while GPIO.input(pin) == GPIO.LOW and timeout>0:
-            timeout-=1
-                    
-        timeout=5000
-        while GPIO.input(pin) == GPIO.HIGH and timeout>0:
-            timeout-=1
-                
+        timeout = 5000
+        while GPIO.input(pin) == GPIO.LOW and timeout > 0:
+            timeout -= 1
+
+        timeout = 5000
+        while GPIO.input(pin) == GPIO.HIGH and timeout > 0:
+            timeout -= 1
+
         while i < 40:
             cnt = 0
-            timeout=5000
-            while GPIO.input(pin) == GPIO.LOW and timeout>0:
-                timeout-=1
+            timeout = 5000
+            while GPIO.input(pin) == GPIO.LOW and timeout > 0:
+                timeout -= 1
             while GPIO.input(pin) == GPIO.HIGH:
                 cnt += 1
                 if cnt > 100:
@@ -255,27 +257,27 @@ class DHT11(Sensor):
             data.append(cnt)
             i += 1
         #print(data)
-        
+
         humidity = 0
         humidity_point = 0
         temperature = 0
         temperature_point = 0
         check = 0
 
-        m=[128,64,32,16,8,4,2,1]
-        th=15    #threshold
+        m = [128, 64, 32, 16, 8, 4, 2, 1]
+        th = 15  #threshold
         for i in range(8):
-            humidity += (0 if data[i]<th else 1)* m[i]
-            humidity_point += (0 if data[i+8]<th else 1) * m[i]
-            temperature += (0 if data[i+16]<th else 1) * m[i]
-            temperature_point += (0 if data[i+24]<th else 1)  * m[i]
-            check += (0 if data[i+32]<th else 1) * m[i]      
+            humidity += (0 if data[i] < th else 1) * m[i]
+            humidity_point += (0 if data[i + 8] < th else 1) * m[i]
+            temperature += (0 if data[i + 16] < th else 1) * m[i]
+            temperature_point += (0 if data[i + 24] < th else 1) * m[i]
+            check += (0 if data[i + 32] < th else 1) * m[i]
         #print("temperature :", temperature, "*C, humidity:", humidity, "%", " tp ",temperature_point," hp ",humidity_point," check ",check)
-        
+
         if check == humidity + humidity_point + temperature + temperature_point:
-            return humidity, temperature,True
+            return humidity, temperature, True
         else:
-            return 0, 0,False
+            return 0, 0, False
 
     def get_temperature(self):
         hum, temp = self.get_hum_temp()
@@ -291,7 +293,6 @@ class Ultrasonic(Sensor):
     https://blog.csdn.net/weixin_41860080/article/details/86766856
     HY-SRF05 HY-SR04
     '''
-
     def __init__(self, trigpin, echopin):
         pins = [trigpin, echopin]
         super(Ultrasonic, self).__init__(pins)
@@ -318,7 +319,6 @@ class InfraredObstacle(Sensor):
     '''
     if detect obstacle, the input is GPIO.LOW
     '''
-
     def __init__(self, pin):
         pins = [pin]
         super(InfraredObstacle, self).__init__(pins)
@@ -362,45 +362,44 @@ class RGBLed(Sensor):
     '''
     RGB Leb light.
     '''
-    on=False;
+    on = False
 
     def __init__(self, rpin, gpin, bpin):
         pins = [rpin, gpin, bpin]
         super(RGBLed, self).__init__(pins)
         GPIO.setup(self.pins, GPIO.OUT)
-        
-    def red(self):   
-        self.on=True     
-        GPIO.output(self.pins, [1, 0, 0])      
 
-    def green(self):   
-        self.on=True    
+    def red(self):
+        self.on = True
+        GPIO.output(self.pins, [1, 0, 0])
+
+    def green(self):
+        self.on = True
         GPIO.output(self.pins, [0, 1, 0])
 
     def blue(self):
-        self.on=True
+        self.on = True
         GPIO.output(self.pins, [0, 0, 1])
 
     def off(self):
         GPIO.output(self.pins, [0, 0, 0])
-        self.on=False
-        
-    def red_blink(self,on=0.5,off=0.5):
-        thread.start_new_thread(self.blink,(self.pins[0],on,off))
-    
-    def green_blink(self,on=0.5,off=0.5):
-        thread.start_new_thread(self.blink,(self.pins[1],on,off))
-        
-    def blue_blink(self,on=0.5,off=0.5):
-        thread.start_new_thread(self.blink,(self.pins[2],on,off))
-            
-    def blink(self,pin,on,off):
+        self.on = False
+
+    def red_blink(self, on=0.5, off=0.5):
+        thread.start_new_thread(self.blink, (self.pins[0], on, off))
+
+    def green_blink(self, on=0.5, off=0.5):
+        thread.start_new_thread(self.blink, (self.pins[1], on, off))
+
+    def blue_blink(self, on=0.5, off=0.5):
+        thread.start_new_thread(self.blink, (self.pins[2], on, off))
+
+    def blink(self, pin, on, off):
         self.off()
         time.sleep(0.5)
-        self.on=True
+        self.on = True
         while self.on:
             GPIO.output(pin, 1)
             time.sleep(on)
             GPIO.output(pin, 0)
             time.sleep(off)
-        
