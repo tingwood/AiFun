@@ -4,6 +4,7 @@ import json
 import logging
 import RPi.GPIO as GPIO
 from fishtank import Fishtank
+import pi_info
 
 app = Flask(__name__)
 logging.basicConfig(filename='./log/info.log',\
@@ -12,11 +13,16 @@ logging.basicConfig(filename='./log/info.log',\
                             datefmt='%H:%M:%S',\
                             level=logging.INFO)
 
+@app.route('/pi/info', methods=['GET'])
+def get_fishtank_status():
+    info=pi_info.getPiInfo()
+    return jsonify(info)
+
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
-fishtank = Fishtank(0, 22, 17, 18, 27)
-
-
+#s1-22, s2-18, s3-17, s4-27
+#s1-heater, s2-pump_ext, s3-uv
+fishtank = Fishtank(0, 0, 18, 17, 0)
 @app.route('/fishtank', methods=['GET'])
 def get_fishtank_status():
     ret = fishtank.get_status()

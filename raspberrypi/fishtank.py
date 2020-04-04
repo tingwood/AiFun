@@ -31,9 +31,9 @@ class Fishtank:
         GPIO.setup(self.pins, GPIO.OUT)
         self.pump_on()
 
-        job = self.scheduler.add_job(self.pump_ext_on_comb, 'cron', hour='10')
+        job = self.scheduler.add_job(self.pump_ext_on, 'cron', hour='10')
         self.jobs.append(job)
-        job = self.scheduler.add_job(self.pump_ext_off_comb, 'cron', hour='11')
+        job = self.scheduler.add_job(self.pump_ext_off, 'cron', hour='11')
         self.jobs.append(job)
         job = self.scheduler.add_job(self.uv_on,
                                      'cron',
@@ -167,11 +167,3 @@ class Fishtank:
         st['pump_ext'] = self.pump_ext_status
         st['temprature'] = self.get_temperature()
         return st
-
-    def pump_ext_on_comb(self):
-        self.pump_ext_on()
-        self.pump_off()
-
-    def pump_ext_off_comb(self):
-        self.pump_ext_off()
-        self.pump_on()
