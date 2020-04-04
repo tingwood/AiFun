@@ -46,7 +46,7 @@ class Fishtank:
                                      hour='10',
                                      minute='30')
         self.jobs.append(job)
-        job = self.scheduler.add_job(self.get_temprature,
+        job = self.scheduler.add_job(self.get_temperature,
                                      'interval',
                                      minutes=5)
         self.jobs.append(job)
