@@ -49,7 +49,6 @@ class DS18B20():
         temperature = float(temperaturedata[2:])
         # Put the decimal point in the right place and display it.
         temperature = temperature / 1000
-        print temperature
         return temperature
 
 
