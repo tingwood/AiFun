@@ -14,7 +14,7 @@ logging.basicConfig(filename='./log/info.log',\
                             level=logging.INFO)
 
 @app.route('/pi/info', methods=['GET'])
-def get_fishtank_status():
+def get_pi_info():
     info=pi_info.getPiInfo()
     return jsonify(info)
 
@@ -26,7 +26,6 @@ fishtank = Fishtank(0, 0, 18, 17, 0)
 @app.route('/fishtank', methods=['GET'])
 def get_fishtank_status():
     ret = fishtank.get_status()
-    print(ret)
     return jsonify(ret)
 
 
