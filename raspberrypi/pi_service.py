@@ -15,9 +15,11 @@ def mkdirs(path):
     if not folder:
         os.makedirs(path)
 
-
-mkdirs('.log')
-logging.basicConfig(filename='./log/info.log',\
+fpath=os.path.dirname(os.path.abspath(__file__))
+print (fpath)
+logpath=fpath+'log'
+mkdirs(logpath)
+logging.basicConfig(filename=logpath+'/info.log',\
                             filemode='w',\
                             format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',\
                             datefmt='%H:%M:%S',\
