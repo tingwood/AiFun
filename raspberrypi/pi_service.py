@@ -9,11 +9,13 @@ import pi_info
 
 app = Flask(__name__)
 
+
 def mkdirs(path):
-    folder = os.path.exists(path) 
-	if not folder:                  
-		os.makedirs(path) 
-        
+    folder = os.path.exists(path)
+    if not folder:
+        os.makedirs(path)
+
+
 mkdirs('.log')
 logging.basicConfig(filename='./log/info.log',\
                             filemode='w',\
@@ -21,16 +23,20 @@ logging.basicConfig(filename='./log/info.log',\
                             datefmt='%H:%M:%S',\
                             level=logging.INFO)
 
+
 @app.route('/pi/info', methods=['GET'])
 def get_pi_info():
-    info=pi_info.getPiInfo()
+    info = pi_info.getPiInfo()
     return jsonify(info)
+
 
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
 #s1-22, s2-18, s3-17, s4-27
 #s1-heater, s2-pump_ext, s3-uv
 fishtank = Fishtank(0, 0, 18, 17, 0)
+
+
 @app.route('/fishtank', methods=['GET'])
 def get_fishtank_status():
     ret = fishtank.get_status()
