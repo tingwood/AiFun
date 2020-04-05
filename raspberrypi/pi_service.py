@@ -4,9 +4,11 @@ import json
 import logging
 import RPi.GPIO as GPIO
 from fishtank import Fishtank
+import os
 import pi_info
 
 app = Flask(__name__)
+os.makedirs('./log')
 logging.basicConfig(filename='./log/info.log',\
                             filemode='w',\
                             format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',\
