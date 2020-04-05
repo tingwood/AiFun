@@ -52,7 +52,7 @@ def set_fishtank_runmode():
         mode = fishtank.get_runmode()
         if mode == 1:
             fishtank.set_runmode(0)
-        else
+        else:
             fishtank.set_runmode(1)
     else:
         raise ServiceException("Unsupport mode")
