@@ -47,11 +47,13 @@ def get_fishtank_status():
 
 @app.route('/fishtank', methods=['POST'])
 def set_fishtank_runmode():
-    mode = request.args.get('mode').strip()
-    if mode == '0':
-        fishtank.set_runmode(0)
-    elif mode == '1':
-        fishtank.set_runmode(1)
+    action = request.args.get('action').strip()
+    if action == 'swmode':
+        mode = fishtank.get_runmode()
+        if mode == 1:
+            fishtank.set_runmode(0)
+        else
+            fishtank.set_runmode(1)
     else:
         raise ServiceException("Unsupport mode")
     return jsonify(fishtank.get_status())
