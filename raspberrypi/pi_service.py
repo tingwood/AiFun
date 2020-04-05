@@ -8,7 +8,13 @@ import os
 import pi_info
 
 app = Flask(__name__)
-os.makedirs('./log')
+
+def mkdirs(path):
+    folder = os.path.exists(path) 
+	if not folder:                  
+		os.makedirs(path) 
+        
+mkdirs('.log')
 logging.basicConfig(filename='./log/info.log',\
                             filemode='w',\
                             format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',\
