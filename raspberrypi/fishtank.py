@@ -165,5 +165,5 @@ class Fishtank:
         st['uvlight'] = self.uv_status
         st['pump'] = self.pump_status
         st['pump_ext'] = self.pump_ext_status
-        st['temprature'] = self.get_temperature()
+        st['temperature'] = self.get_temperature()
         return st
