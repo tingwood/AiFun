@@ -17,7 +17,7 @@ def mkdirs(path):
 
 fpath=os.path.dirname(os.path.abspath(__file__))
 print (fpath)
-logpath=fpath+'log'
+logpath=fpath+'/log'
 mkdirs(logpath)
 logging.basicConfig(filename=logpath+'/info.log',\
                             filemode='w',\
@@ -37,7 +37,6 @@ GPIO.setmode(GPIO.BCM)
 #s1-22, s2-18, s3-17, s4-27
 #s1-heater, s2-pump_ext, s3-uv
 fishtank = Fishtank(0, 0, 18, 17, 0)
-
 
 @app.route('/fishtank', methods=['GET'])
 def get_fishtank_status():

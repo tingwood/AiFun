@@ -57,6 +57,10 @@ def test_Tracker():
         print(sen.reflect())
         time.sleep(1)
 
+def test_DS18B20():
+    sen=sensor.DS18B20('28-01191a61480c')
+    print (sen.get_temperature())
+
 def test_Ultrasonic():
     sen=sensor.Ultrasonic(23,18)
     print(sen.distance())
@@ -67,7 +71,7 @@ def main():
     #test_DHT11()
     #test_RGB()
     #test_Tracker()
-    test_Ultrasonic()
+    test_DS18B20()
     GPIO.cleanup()
 
 main()

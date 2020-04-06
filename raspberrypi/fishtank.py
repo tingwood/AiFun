@@ -17,7 +17,7 @@ class Fishtank:
     heater_status = 0  #0-off, 1-on
     uv_status = 0
     temperature = 0  #temp get from sensor
-    temp_offset = 0  #temp sensor calibration
+    temp_offset = -13  #temp sensor calibration
     temp_heater_on = 16  #below this temp, heater on
     temp_heater_off = 22  #above this temp, heater off
 
@@ -37,12 +37,12 @@ class Fishtank:
         self.jobs.append(job)
         job = self.scheduler.add_job(self.uv_on,
                                      'cron',
-                                     day_of_week='sun',
+                                     day_of_week='mon',
                                      hour='15')
         self.jobs.append(job)
         job = self.scheduler.add_job(self.uv_off,
                                      'cron',
-                                     day_of_week='sun',
+                                     day_of_week='mon',
                                      hour='15',
                                      minute='30')
         self.jobs.append(job)
@@ -78,70 +78,70 @@ class Fishtank:
         if pin > 0:
             GPIO.output(pin, GPIO.HIGH)
         self.light_status = 1
-        log.info("light on")
+        #log.info("light on")
 
     def light_off(self):
         pin = self.pins[0]
         if pin > 0:
             GPIO.output(pin, GPIO.LOW)
         self.light_status = 1
-        log.info("light off")
+        #log.info("light off")
 
     def pump_on(self):
         pin = self.pins[1]
         if pin > 0:
             GPIO.output(pin, GPIO.HIGH)
         self.pump_status = 1
-        log.info("pump on")
+        #log.info("pump on")
 
     def pump_off(self):
         pin = self.pins[1]
         if pin > 0:
             GPIO.output(pin, GPIO.LOW)
         self.pump_status = 0
-        log.info("pump off")
+        #log.info("pump off")
 
     def pump_ext_on(self):
         pin = self.pins[2]
         if pin > 0:
             GPIO.output(pin, GPIO.HIGH)
         self.pump_ext_status = 1
-        log.info("external pump on")
+        #log.info("external pump on")
 
     def pump_ext_off(self):
         pin = self.pins[2]
         if pin > 0:
             GPIO.output(pin, GPIO.LOW)
         self.pump_ext_status = 0
-        log.info("external pump off")
+        #log.info("external pump off")
 
     def uv_on(self):
         pin = self.pins[3]
         if pin > 0:
             GPIO.output(pin, GPIO.HIGH)
         self.uv_status = 1
-        log.info("UV light on")
+        #log.info("UV light on")
 
     def uv_off(self):
         pin = self.pins[3]
         if pin > 0:
             GPIO.output(pin, GPIO.LOW)
         self.uv_status = 0
-        log.info("UV light off")
+        #log.info("UV light off")
 
     def heater_on(self):
         pin = self.pins[4]
         if pin > 0:
             GPIO.output(pin, GPIO.HIGH)
         self.heater_status = 1
-        log.info("heater on")
+        #log.info("heater on")
 
     def heater_off(self):
         pin = self.pins[4]
         if pin > 0:
             GPIO.output(pin, GPIO.HIGH)
         self.heater_status = 0
-        log.info("heater off")
+        #log.info("heater off")
 
     def get_temperature(self):
         self.temperature = self.temp_sensor.get_temperature()
