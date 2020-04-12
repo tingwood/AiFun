@@ -31,9 +31,11 @@ class DS18B20():
     pi@raspberrypi:/sys/bus/w1/devices/28-000004d618fa $ cat w1_slave
     '''
     serial = ''
+    calib = 0  #calibration of sensor
 
-    def __init__(self, serial):
-        self.serial = serial        
+    def __init__(self, serial, calib):
+        self.serial = serial
+        self.calib = calib
 
     def get_temperature(self):
         tfile = open("/sys/bus/w1/devices/" + self.serial + "/w1_slave")
@@ -48,7 +50,7 @@ class DS18B20():
         # The first two characters are "t=", so get rid of those and convert the temperature from a string to a number.
         temperature = float(temperaturedata[2:])
         # Put the decimal point in the right place and display it.
-        temperature = temperature / 1000
+        temperature = temperature / 1000 + self.calib 
         return temperature
 
 

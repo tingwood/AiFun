@@ -13,18 +13,17 @@ class Fishtank:
     runmode = 0  #0-normal, 1-change water
     light_status = 0  #0-off, 1-on
     pump_status = 0  #0-off, 1-on
-    pump_ext_status = 0
+    pump_ext_status = 0 #0-off, 1-on
     heater_status = 0  #0-off, 1-on
-    uv_status = 0
+    uv_status = 0  #0-off, 1-on
     temperature = 0  #temp get from sensor
-    temp_offset = -13  #temp sensor calibration
-    temp_heater_on = 16  #below this temp, heater on
-    temp_heater_off = 22  #above this temp, heater off
+    temp_heater_on = 18  #below this temp, heater on
+    temp_heater_off = 24  #above this temp, heater off
 
     pins = []
     scheduler = BackgroundScheduler()
     jobs = []
-    temp_sensor = DS18B20('28-01191a61480c')
+    temp_sensor = DS18B20('28-01191a61480c',-13)
 
     def __init__(self, lightPin, pumpPin, pumbExtPin, uvPin, heaterPin):
         self.pins = [lightPin, pumpPin, pumbExtPin, uvPin, heaterPin]
@@ -145,7 +144,7 @@ class Fishtank:
 
     def get_temperature(self):
         self.temperature = self.temp_sensor.get_temperature()
-        temp = self.temperature + self.temp_offset
+        temp = self.temperature 
         log.info("Current temperature is %d", temp)
         if temp < self.temp_heater_on and temp > 0:
             log.info("Current temperature is lower than %d",
@@ -165,5 +164,5 @@ class Fishtank:
         st['uvlight'] = self.uv_status
         st['pump'] = self.pump_status
         st['pump_ext'] = self.pump_ext_status
-        st['temperature'] = self.get_temperature()
+        st['temperature'] = round(self.get_temperature(),2)
         return st
