@@ -23,7 +23,7 @@ class Fishtank:
     pins = []
     scheduler = BackgroundScheduler()
     jobs = []
-    temp_sensor = DS18B20('28-01191a61480c',-13)
+    temp_sensor = DS18B20('28-01191a61480c',0)
 
     def __init__(self, lightPin, pumpPin, pumbExtPin, uvPin, heaterPin):
         self.pins = [lightPin, pumpPin, pumbExtPin, uvPin, heaterPin]

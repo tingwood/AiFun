@@ -1,8 +1,11 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
+import sys
+sys.path.append("..")
 import RPi.GPIO as GPIO
-import raspberrypi.pi_sensor as sensor
+import pi_sensor as sensor
 import time
+from utils import utils
 
 
 def test_DHT111():
@@ -66,12 +69,13 @@ def test_Ultrasonic():
     print(sen.distance())
     
 def main():
-    GPIO.setwarnings(False)
-    GPIO.setmode(GPIO.BCM)
+    #GPIO.setwarnings(False)
+    #GPIO.setmode(GPIO.BCM)
     #test_DHT11()
     #test_RGB()
     #test_Tracker()
-    test_DS18B20()
-    GPIO.cleanup()
+    #test_DS18B20()
+    #GPIO.cleanup()
+    print(utils.genUuid()) 
 
 main()

@@ -6,19 +6,22 @@ import RPi.GPIO as GPIO
 from fishtank import Fishtank
 import os
 import pi_info
+import sys
+sys.path.append("..")
+from utils import utils
 
-app = Flask(__name__)
 
+app = Flask(__name__,static_url_path='')
 
-def mkdirs(path):
-    folder = os.path.exists(path)
-    if not folder:
-        os.makedirs(path)
+#def mkdirs(path):
+#    folder = os.path.exists(path)
+#    if not folder:
+#        os.makedirs(path)
 
 fpath=os.path.dirname(os.path.abspath(__file__))
-print (fpath)
+#print (fpath)
 logpath=fpath+'/log'
-mkdirs(logpath)
+utils.mkdirs(logpath)
 logging.basicConfig(filename=logpath+'/info.log',\
                             filemode='w',\
                             format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',\
