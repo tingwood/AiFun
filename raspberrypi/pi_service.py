@@ -1,24 +1,17 @@
 # -*- coding: UTF-8 -*-
+import os, sys
 from flask import Flask, request, jsonify
 import json
 import logging
 import RPi.GPIO as GPIO
 from fishtank import Fishtank
-import os
 import pi_info
-import sys
-sys.path.append("..")
+
+#o_path=os.getcwd()
+fpath=os.path.dirname(os.path.abspath(__file__))
+sys.path.append(fpath+"/../")
 from utils import utils
 
-
-app = Flask(__name__,static_url_path='')
-
-#def mkdirs(path):
-#    folder = os.path.exists(path)
-#    if not folder:
-#        os.makedirs(path)
-
-fpath=os.path.dirname(os.path.abspath(__file__))
 #print (fpath)
 logpath=fpath+'/log'
 utils.mkdirs(logpath)
@@ -28,6 +21,7 @@ logging.basicConfig(filename=logpath+'/info.log',\
                             datefmt='%H:%M:%S',\
                             level=logging.INFO)
 
+app = Flask(__name__, static_url_path='')
 
 @app.route('/pi/info', methods=['GET'])
 def get_pi_info():
@@ -39,7 +33,7 @@ GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
 #s1-22, s2-18, s3-17, s4-27
 #s1-heater, s2-pump_ext, s3-uv
-fishtank = Fishtank(0, 0, 18, 17, 0)
+fishtank = Fishtank(0, 0, 18, 17, 22)
 
 @app.route('/fishtank', methods=['GET'])
 def get_fishtank_status():
