@@ -49,6 +49,6 @@ def getPiInfo():
     #RaspiInfo['CPUuse'] = getCPUinfo()
     return RaspiInfo
 
-if __name__ == '__main__':    
+if __name__ == '__main__':
     # 必须转化为标准 JSON 格式备用，下文有解释
-    print(json.dumps(RaspiInfo))
+    print(json.dumps(getPiInfo()))

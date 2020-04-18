@@ -82,6 +82,7 @@ http_access allow localnet
 
 #### install ss
 
+#### install polipo
     
 ## Python
 ### 生成requirements.txt
