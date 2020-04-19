@@ -36,12 +36,12 @@ class Fishtank:
         self.jobs.append(job)
         job = self.scheduler.add_job(self.uv_on,
                                      'cron',
-                                     day_of_week='mon',
+                                     #day_of_week='mon',
                                      hour='15')
         self.jobs.append(job)
         job = self.scheduler.add_job(self.uv_off,
                                      'cron',
-                                     day_of_week='mon',
+                                     #day_of_week='mon',
                                      hour='15',
                                      minute='30')
         self.jobs.append(job)
@@ -59,6 +59,7 @@ class Fishtank:
             log.info("switch to auto-running mode")
             for job in self.jobs:
                 job.resume()
+            self.pump_on()
         if mode == 1:
             log.info("switch to changing water mode")
             for job in self.jobs:
@@ -66,8 +67,8 @@ class Fishtank:
             self.uv_off()
             self.pump_ext_off()
             self.pump_off()
-            self.light_on()
-            self.heater_on()
+            self.light_off()
+            self.heater_off()
 
     def get_runmode(self):
         return self.runmode

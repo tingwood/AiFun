@@ -8,11 +8,10 @@ from fishtank import Fishtank
 import pi_info
 
 #o_path=os.getcwd()
-fpath=os.path.dirname(os.path.abspath(__file__))
+fpath=os.path.dirname(os.path.abspath(__file__))    #pi_service dir 
 sys.path.append(fpath+"/../")
 from utils import utils
 
-#print (fpath)
 logpath=fpath+'/log'
 utils.mkdirs(logpath)
 logging.basicConfig(filename=logpath+'/info.log',\
@@ -33,7 +32,7 @@ GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
 #s1-22, s2-18, s3-17, s4-27
 #s1-heater, s2-pump_ext, s3-uv
-fishtank = Fishtank(0, 0, 18, 17, 22)
+fishtank = Fishtank(0, 27, 18, 17, 22)
 
 @app.route('/fishtank', methods=['GET'])
 def get_fishtank_status():
@@ -80,3 +79,7 @@ def handleServiceExp(error):
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=18082)  #启动socket
+    #cfg = dict()    
+    #with open(fpath+'/pi_service.cfg') as cfgfile:
+    #    cfg = json.load(cfgfile)
+    
