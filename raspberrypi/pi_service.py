@@ -36,8 +36,7 @@ fishtank = Fishtank(0, 27, 18, 17, 22)
 
 @app.route('/fishtank', methods=['GET'])
 def get_fishtank_status():
-    ret = fishtank.get_status()
-    return jsonify(ret)
+    return jsonify(fishtank.get_status())
 
 
 @app.route('/fishtank', methods=['POST'])
@@ -82,4 +81,5 @@ if __name__ == '__main__':
     #cfg = dict()    
     #with open(fpath+'/pi_service.cfg') as cfgfile:
     #    cfg = json.load(cfgfile)
+    
     

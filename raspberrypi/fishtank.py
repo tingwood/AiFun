@@ -17,8 +17,8 @@ class Fishtank:
     heater_status = 0  #0-off, 1-on
     uv_status = 0  #0-off, 1-on
     temperature = 0  #temp get from sensor
-    temp_heater_on = 18  #below this temp, heater on
-    temp_heater_off = 24  #above this temp, heater off
+    temp_heater_on = 24  #below this temp, heater on
+    temp_heater_off = 27  #above this temp, heater off
 
     pins = []
     scheduler = BackgroundScheduler()
@@ -156,14 +156,26 @@ class Fishtank:
                      self.temp_heater_off)
             self.heater_off()
         return temp
+    def set_temp_heater_on(self, temp):
+        if temp<10:
+            return
+        self.temp_heater_on=temp
+    def set_temp_heater_off(self, temp):
+        if temp<self.temp_heater_on+2:
+            log.error("Set Heater-off temperature %d failed, because the setting value should be higher than Heater-on temperature at least 2 degrees.",temp)
+            return
+        if temp>40:
+            log.error("Set Heater-off temperature %d failed, because the setting value is too much high above 40 degrees",temp)
+            return
+        self.temp_heater_off=temp
 
     def get_status(self):
         st = {}
-        st['runmode'] = self.runmode
-        st['light'] = self.light_status
-        st['heater'] = self.heater_status
-        st['uvlight'] = self.uv_status
-        st['pump'] = self.pump_status
-        st['pump_ext'] = self.pump_ext_status
+        st['runmode'] = (self.runmode==0) and 'Normal' or 'Change Water'
+        st['light'] = (self.light_status==0) and 'Off' or 'On'
+        st['heater'] = (self.heater_status==0) and 'Off' or 'On'
+        st['uvlight'] = (self.uv_status==0) and 'Off' or 'On'
+        st['pump'] = (self.pump_status==0) and 'Off' or 'On'
+        st['pump_ext'] = (self.pump_ext_status==0) and 'Off' or 'On'
         st['temperature'] = round(self.get_temperature(),2)
         return st
