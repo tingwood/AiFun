@@ -38,7 +38,10 @@ class DS18B20():
         self.calib = calib
 
     def get_temperature(self):
-        tfile = open("/sys/bus/w1/devices/" + self.serial + "/w1_slave")
+        fpath="/sys/bus/w1/devices/" + self.serial + "/w1_slave"
+        if not os.path.exists(fpath):
+            return -50
+        tfile = open(fpath)
         # Read all of the text in the file.
         text = tfile.read()
         # close the file
@@ -112,17 +115,24 @@ class Relay(Sensor):
     Trigger jumpper：
     A jumpper can be set using GPIO.LOW or GPIO.HIGH to relay trigger
     '''
-    def __init__(self, pin):
+    reverse = False
+    def __init__(self, pin, reverse=False):
         pins = [pin]
         super(Relay, self).__init__(pins)
         GPIO.setup(self.pins, GPIO.OUT)
+        self.reverse=reverse
 
-    def trigger(self):
-        GPIO.output(self.pins[0], GPIO.HIGH)
+    def close(self):
+        if self.reverse:
+            GPIO.output(self.pins[0], GPIO.LOW)
+        else:
+            GPIO.output(self.pins[0], GPIO.HIGH)
 
-    def untrigger(self):
-        GPIO.output(self.pins[0], GPIO.LOW)
-
+    def open(self):
+        if self.reverse:
+            GPIO.output(self.pins[0], GPIO.HIGH)
+        else:
+            GPIO.output(self.pins[0], GPIO.LOW)
 
 class Tracker(Sensor):
     '''

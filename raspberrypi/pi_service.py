@@ -4,7 +4,7 @@ from flask import Flask, request, jsonify
 import json
 import logging
 import RPi.GPIO as GPIO
-from fishtank import Fishtank
+from aquarium import Aquarium
 import pi_info
 
 #o_path=os.getcwd()
@@ -30,27 +30,27 @@ def get_pi_info():
 
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
-#s1-22, s2-18, s3-17, s4-27
-#s1-heater, s2-pump_ext, s3-uv
-fishtank = Fishtank(0, 27, 18, 17, 22)
+aquarium = Aquarium()
 
-@app.route('/fishtank', methods=['GET'])
+@app.route('/aquarium', methods=['GET'])
 def get_fishtank_status():
-    return jsonify(fishtank.get_status())
+    return jsonify(aquarium.get_status())
 
 
-@app.route('/fishtank', methods=['POST'])
+@app.route('/aquarium', methods=['POST'])
 def set_fishtank_runmode():
     action = request.args.get('action').strip()
     if action == 'swmode':
-        mode = fishtank.get_runmode()
+        mode = aquarium.get_runmode()
         if mode == 1:
-            fishtank.set_runmode(0)
+            aquarium.set_runmode(0)
         else:
-            fishtank.set_runmode(1)
+            aquarium.set_runmode(1)
+    elif action == 'reload':
+        aquarium.reload_cfg()
     else:
         raise ServiceException("Unsupport mode")
-    return jsonify(fishtank.get_status())
+    return jsonify(aquarium.get_status())
 
 
 class ServiceException(Exception):

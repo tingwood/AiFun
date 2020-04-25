@@ -1,12 +1,12 @@
 # -*- coding: UTF-8 -*-
 import RPi.GPIO as GPIO
-import time
+import os,time,json
 from apscheduler.schedulers.background import BackgroundScheduler
 import logging as log
-from pi_sensor import DS18B20
+from pi_sensor import DS18B20, Relay
 
 
-class Fishtank:
+class Aquarium:
     '''
     fish tank
     '''
@@ -20,14 +20,17 @@ class Fishtank:
     temp_heater_on = 24  #below this temp, heater on
     temp_heater_off = 27  #above this temp, heater off
 
-    pins = []
+    light_relay=None
+    heater_relay=None
+    uvlight_relay=None
+    pump_relay=None
+    pumpext_relay=None    
+    temp_sensor = None
     scheduler = BackgroundScheduler()
     jobs = []
-    temp_sensor = DS18B20('28-01191a61480c',0)
 
-    def __init__(self, lightPin, pumpPin, pumbExtPin, uvPin, heaterPin):
-        self.pins = [lightPin, pumpPin, pumbExtPin, uvPin, heaterPin]
-        GPIO.setup(self.pins, GPIO.OUT)
+    def __init__(self):
+        self.reload_cfg()
         self.pump_on()
 
         job = self.scheduler.add_job(self.pump_ext_on, 'cron', hour='15')
@@ -48,6 +51,14 @@ class Fishtank:
         job = self.scheduler.add_job(self.get_temperature,
                                      'interval',
                                      minutes=5)
+        self.jobs.append(job)
+        job = self.scheduler.add_job(self.light_on,
+                                     'cron',
+                                     hour='19')
+        self.jobs.append(job)
+        job = self.scheduler.add_job(self.light_off,
+                                     'cron',
+                                     hour='22')
         self.jobs.append(job)
         self.scheduler.start()
 
@@ -74,76 +85,108 @@ class Fishtank:
         return self.runmode
 
     def light_on(self):
-        pin = self.pins[0]
-        if pin > 0:
-            GPIO.output(pin, GPIO.HIGH)
+        if self.light_relay is None:
+            return
+        self.light_relay.close()
+        #pin = self.pins[0]
+        #if pin > 0:
+        #    GPIO.output(pin, GPIO.HIGH)
         self.light_status = 1
         #log.info("light on")
 
     def light_off(self):
-        pin = self.pins[0]
-        if pin > 0:
-            GPIO.output(pin, GPIO.LOW)
-        self.light_status = 1
+        if self.light_relay is None:
+            return
+        self.light_relay.open()
+        #pin = self.pins[0]
+        #if pin > 0:
+        #    GPIO.output(pin, GPIO.LOW)
+        self.light_status = 0
         #log.info("light off")
 
     def pump_on(self):
-        pin = self.pins[1]
-        if pin > 0:
-            GPIO.output(pin, GPIO.HIGH)
+        if self.pump_relay is None:
+            return
+        self.pump_relay.close()
+        #pin = self.pins[1]
+        #if pin > 0:
+        #    GPIO.output(pin, GPIO.HIGH)
         self.pump_status = 1
         #log.info("pump on")
 
     def pump_off(self):
-        pin = self.pins[1]
-        if pin > 0:
-            GPIO.output(pin, GPIO.LOW)
+        if self.pump_relay is None:
+            return
+        self.pump_relay.open()
+        #pin = self.pins[1]
+        #if pin > 0:
+        #    GPIO.output(pin, GPIO.LOW)
         self.pump_status = 0
         #log.info("pump off")
 
     def pump_ext_on(self):
-        pin = self.pins[2]
-        if pin > 0:
-            GPIO.output(pin, GPIO.HIGH)
+        if self.pumpext_relay is None:
+            return
+        self.pumpext_relay.close()
+        #pin = self.pins[2]
+        #if pin > 0:
+        #    GPIO.output(pin, GPIO.HIGH)
         self.pump_ext_status = 1
         #log.info("external pump on")
 
     def pump_ext_off(self):
-        pin = self.pins[2]
-        if pin > 0:
-            GPIO.output(pin, GPIO.LOW)
+        if self.pumpext_relay is None:
+            return
+        self.pumpext_relay.open()
+        #pin = self.pins[2]
+        #if pin > 0:
+        #    GPIO.output(pin, GPIO.LOW)
         self.pump_ext_status = 0
         #log.info("external pump off")
 
     def uv_on(self):
-        pin = self.pins[3]
-        if pin > 0:
-            GPIO.output(pin, GPIO.HIGH)
+        if self.uvlight_relay is None:
+            return
+        self.uvlight_relay.close()
+        #pin = self.pins[3]
+        #if pin > 0:
+        #    GPIO.output(pin, GPIO.HIGH)
         self.uv_status = 1
         #log.info("UV light on")
 
     def uv_off(self):
-        pin = self.pins[3]
-        if pin > 0:
-            GPIO.output(pin, GPIO.LOW)
+        if self.uvlight_relay is None:
+            return
+        self.uvlight_relay.open()
+        #pin = self.pins[3]
+        #if pin > 0:
+        #    GPIO.output(pin, GPIO.LOW)
         self.uv_status = 0
         #log.info("UV light off")
 
     def heater_on(self):
-        pin = self.pins[4]
-        if pin > 0:
-            GPIO.output(pin, GPIO.HIGH)
+        if self.heater_relay is None:
+            return
+        self.heater_relay.close()
+        #pin = self.pins[4]
+        #if pin > 0:
+        #    GPIO.output(pin, GPIO.HIGH)
         self.heater_status = 1
         #log.info("heater on")
 
     def heater_off(self):
-        pin = self.pins[4]
-        if pin > 0:
-            GPIO.output(pin, GPIO.HIGH)
+        if self.heater_relay is None:
+            return
+        self.heater_relay.open()
+        #pin = self.pins[4]
+        #if pin > 0:
+        #    GPIO.output(pin, GPIO.HIGH)
         self.heater_status = 0
         #log.info("heater off")
 
     def get_temperature(self):
+        if self.temp_sensor is None:
+            return -30
         self.temperature = self.temp_sensor.get_temperature()
         temp = self.temperature 
         log.info("Current temperature is %d", temp)
@@ -156,6 +199,7 @@ class Fishtank:
                      self.temp_heater_off)
             self.heater_off()
         return temp
+        
     def set_temp_heater_on(self, temp):
         if temp<10:
             return
@@ -169,6 +213,49 @@ class Fishtank:
             return
         self.temp_heater_off=temp
 
+    #s1-22, s2-18, s3-17, s4-27
+    #s1-heater, s2-pump_ext, s3-uv s4-light
+    def reload_cfg(self):
+        fpath=os.path.dirname(os.path.abspath(__file__)) 
+        cfg = dict()    
+        with open(fpath+'/aquarium.cfg') as cfgfile:
+            cfg = json.load(cfgfile)
+        #print(cfg)
+        # set light
+        obj=cfg['light']
+        if obj is not None:
+            self.light_relay=Relay(obj['relay']['pin'],obj['relay']['reverse'])
+            #print(obj['relay']['pin'])
+            #print(obj['relay']['reverse'])
+        # set heater
+        obj=cfg['heater']
+        if obj is not None:
+            self.heater_relay=Relay(obj['relay']['pin'],obj['relay']['reverse'])
+            temp=obj['heater_on_temp']
+            if temp is not None and temp>10:
+                self.temp_heater_on=temp
+            temp=obj['heater_off_temp']
+            if temp is not None and temp<40 and temp>self.temp_heater_on+1:
+                self.temp_heater_off=temp              
+            #print(self.temp_heater_on)
+            #print(self.temp_heater_off)
+        # set pump
+        obj=cfg['pump']
+        if obj is not None:
+            self.pump_relay=Relay(obj['relay']['pin'],obj['relay']['reverse'])
+        # set pumpext
+        obj=cfg['pumpext']
+        if obj is not None:
+            self.pumpext_relay=Relay(obj['relay']['pin'],obj['relay']['reverse'])
+        # set uvlight
+        obj=cfg['uvlight']
+        if obj is not None:
+            self.uvlight_relay=Relay(obj['relay']['pin'],obj['relay']['reverse'])
+        # set temp_sensor
+        obj=cfg['temp_sensor']
+        if obj is not None:
+            self.temp_sensor=DS18B20(obj['serial'],obj['calib'])
+        
     def get_status(self):
         st = {}
         st['runmode'] = (self.runmode==0) and 'Normal' or 'Change Water'
@@ -179,3 +266,4 @@ class Fishtank:
         st['pump_ext'] = (self.pump_ext_status==0) and 'Off' or 'On'
         st['temperature'] = round(self.get_temperature(),2)
         return st
+
