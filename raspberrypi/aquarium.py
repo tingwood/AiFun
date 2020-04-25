@@ -265,5 +265,7 @@ class Aquarium:
         st['pump'] = (self.pump_status==0) and 'Off' or 'On'
         st['pump_ext'] = (self.pump_ext_status==0) and 'Off' or 'On'
         st['temperature'] = round(self.get_temperature(),2)
+        st['temp_heater_on']=self.temp_heater_on
+        st['temp_heater_off']=self.temp_heater_off
         return st
 

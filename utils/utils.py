@@ -1,6 +1,7 @@
 import os
 import time
 import uuid
+import socket
 #from path import Path
 
 #dir = r"d:/demo"
@@ -31,3 +32,13 @@ def mkdirs(dir):
 def genUuid():
     id = uuid.uuid1()
     return str(id).replace("-", "")
+
+def get_host_ip():
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(('8.8.8.8', 80))
+        ip = s.getsockname()[0]
+    finally:
+        s.close()
+
+    return ip

@@ -21,6 +21,14 @@ logging.basicConfig(filename=logpath+'/info.log',\
                             level=logging.INFO)
 
 app = Flask(__name__, static_url_path='')
+cfg = dict()    
+with open(fpath+'/pi_service.cfg') as cfgfile:
+    cfg = json.load(cfgfile)
+aquarium = None
+if cfg['aquarium']:
+    GPIO.setwarnings(False)
+    GPIO.setmode(GPIO.BCM)        
+    aquarium = Aquarium()
 
 @app.route('/pi/info', methods=['GET'])
 def get_pi_info():
@@ -28,17 +36,17 @@ def get_pi_info():
     return jsonify(info)
 
 
-GPIO.setwarnings(False)
-GPIO.setmode(GPIO.BCM)
-aquarium = Aquarium()
-
 @app.route('/aquarium', methods=['GET'])
 def get_fishtank_status():
+    if aquarium is None:
+        raise ServiceException("Unsupported")
     return jsonify(aquarium.get_status())
 
 
 @app.route('/aquarium', methods=['POST'])
 def set_fishtank_runmode():
+    if aquarium is None:
+        raise ServiceException("Unsupported")
     action = request.args.get('action').strip()
     if action == 'swmode':
         mode = aquarium.get_runmode()
@@ -49,13 +57,12 @@ def set_fishtank_runmode():
     elif action == 'reload':
         aquarium.reload_cfg()
     else:
-        raise ServiceException("Unsupport mode")
+        raise ServiceException("Unsupported action")
     return jsonify(aquarium.get_status())
 
 
 class ServiceException(Exception):
     status_code = 400
-
     def __init__(self, message, status_code=None, payload=None):
         super(ServiceException, self).__init__(message)
         self.message = message
@@ -77,9 +84,6 @@ def handleServiceExp(error):
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=18082)  #启动socket
-    #cfg = dict()    
-    #with open(fpath+'/pi_service.cfg') as cfgfile:
-    #    cfg = json.load(cfgfile)
-    
+    ip=utils.get_host_ip()
+    app.run(host=ip, port=18082)  #启动socket       
     
