@@ -50,7 +50,7 @@ class Aquarium:
         self.jobs.append(job)
         job = self.scheduler.add_job(self.get_temperature,
                                      'interval',
-                                     minutes=5)
+                                     minutes=10)
         self.jobs.append(job)
         job = self.scheduler.add_job(self.light_on,
                                      'cron',
@@ -264,7 +264,7 @@ class Aquarium:
         st['uvlight'] = (self.uv_status==0) and 'Off' or 'On'
         st['pump'] = (self.pump_status==0) and 'Off' or 'On'
         st['pump_ext'] = (self.pump_ext_status==0) and 'Off' or 'On'
-        st['temperature'] = round(self.get_temperature(),2)
+        st['temperature'] = round(self.temperature,2)
         st['temp_heater_on']=self.temp_heater_on
         st['temp_heater_off']=self.temp_heater_off
         return st

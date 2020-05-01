@@ -67,15 +67,28 @@ def test_DS18B20():
 def test_Ultrasonic():
     sen=sensor.Ultrasonic(23,18)
     print(sen.distance())
+
+def test_3461BS():
+    '''
+     1  a  f  2  3  b 
+     e  d  dp c  g  4
+    '''
+    sen=sensor.LED_3461BS(19,11,12,20,21,13,7,16,26,6,5,8)
+    sen.show('efgh')
+    time.sleep(5)
+    sen.off()
+    time.sleep(1)
+    
     
 def main():
-    #GPIO.setwarnings(False)
-    #GPIO.setmode(GPIO.BCM)
+    GPIO.setwarnings(False)
+    GPIO.setmode(GPIO.BCM)
     #test_DHT11()
     #test_RGB()
     #test_Tracker()
     #test_DS18B20()
-    #GPIO.cleanup()
-    print(utils.genUuid()) 
+    
+    test_3461BS()
+    GPIO.cleanup()
 
 main()
