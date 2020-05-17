@@ -4,7 +4,7 @@
 import argparse
 import locale
 import logging
-import raspberrypi.pi_actions as pi
+#import raspberrypi.pi_actions as pi
 from aiy.board import Board, Led
 from aiy.cloudspeech import CloudSpeechClient
 
