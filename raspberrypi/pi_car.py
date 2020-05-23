@@ -2,39 +2,57 @@
 # -*- coding: UTF-8 -*-
 import RPi.GPIO as GPIO
 import time
+from pi_sensor import Tracker,HCSR04
 
-pin1=4
-pin2=17
-pin3=27
-pin4=22
 
-pins=[pin1,pin2,pin3,pin4]
+TRIG=3
+ECHO=2
+ENA=8
+ENB=27
+IN1=9
+IN2=10
+IN3=11
+IN4=22
+LTRK=12
+RTRK=24
+SERVO=5
+
+
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM) 
-GPIO.setup(pins, GPIO.OUT)
+
+GPIO.setup([ENA,ENB,IN1,IN2,IN3,IN4], GPIO.OUT)
+pwmA=GPIO.PWM(ENA,80)
+pwmB=GPIO.PWM(ENB,80)
+pwmA.start(30)	# 30%占空比
+pwmB.start(30)
+
+lTracker= Tracker(LTRK)
+rTracker= Tracker(RTRK)
+dist=HCSR04(TRIG, ECHO)
 
 def left_forward():
-	GPIO.output(pins[0], GPIO.HIGH)
-	GPIO.output(pins[1], GPIO.LOW)
+	GPIO.output(IN1, GPIO.HIGH)
+	GPIO.output(IN2, GPIO.LOW)
 
 def left_backward():
-	GPIO.output(pins[1], GPIO.HIGH)
-	GPIO.output(pins[0], GPIO.LOW)
+	GPIO.output(IN2, GPIO.HIGH)
+	GPIO.output(IN1, GPIO.LOW)
 	
 def right_forward():
-	GPIO.output(pins[3], GPIO.HIGH)
-	GPIO.output(pins[2], GPIO.LOW)
+	GPIO.output(IN3, GPIO.HIGH)
+	GPIO.output(IN2, GPIO.LOW)
 	
 def right_backward():
-	GPIO.output(pins[2], GPIO.HIGH)
-	GPIO.output(pins[3], GPIO.LOW)
+	GPIO.output(IN2, GPIO.HIGH)
+	GPIO.output(IN3, GPIO.LOW)
 
 def stop():
 	var=GPIO.LOW
-	GPIO.output(pins[0], var)
-	GPIO.output(pins[1], var)
-	GPIO.output(pins[2], var)
-	GPIO.output(pins[3], var)
+	GPIO.output(IN1, var)
+	GPIO.output(IN2, var)
+	GPIO.output(IN3, var)
+	GPIO.output(IN4, var)
 	
 def forward():
 	left_forward()

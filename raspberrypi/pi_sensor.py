@@ -3,10 +3,11 @@
 import RPi.GPIO as GPIO
 import time
 import os
-import _thread as thread
+import thread
+import threading
 
 
-class Sensor:
+class Sensor(object):
     '''
     Sensor base class
     '''
@@ -211,20 +212,33 @@ class Relay(Sensor):
         else:
             GPIO.output(self.pins[0], GPIO.LOW)
 
+            
 class Tracker(Sensor):
     '''
     Infrared tracker sensor
     if the reflection is strong enough, output GPIO.HIGH
     otherwise output GPIO.LOW (e.g. detect black line)
     '''
-    def __init__(self, pin):
+    ontrack = 1
+    offtrack = 0
+    def __init__(self, pin, reverse=False):
         pins = [pin]
+        self.ontrack = (reverse==False) and 1 or 0
+        self.offtrack = (reverse==True) and 1 or 0
         super(Tracker, self).__init__(pins)
         GPIO.setup(self.pins, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-
-    def reflect(self):
-        return True if GPIO.input(self.pins[0]) == GPIO.HIGH else False
-
+        
+    def ontrack(self):
+        if GPIO.input(self.pins[0]) == self.ontrack:
+            return True
+        else:
+            return False
+            
+    def offtrack(self):
+        if GPIO.input(self.pins[0]) == self.offtrack:
+            return True
+        else:
+            return False
 
 class DHT111(Sensor):
     '''
@@ -373,33 +387,67 @@ class DHT11(Sensor):
         hum, temp = self.get_hum_temp()
         return hum
 
-
-class Ultrasonic(Sensor):
+    
+class Ultrasonic_Distance(Sensor):
     '''
     https://blog.csdn.net/weixin_41860080/article/details/86766856
     HY-SRF05 HY-SR04
     '''
-    def __init__(self, trigpin, echopin):
+    distance = 0.0
+    __running = False
+    __t1 = None
+    __interval=0.2
+    
+    def __init__(self, trigpin, echopin, interval=0.2):
         pins = [trigpin, echopin]
-        super(Ultrasonic, self).__init__(pins)
+        if interval>0.01:
+            self.__interval = interval
+        super(Ultrasonic_Distance, self).__init__(pins)
         GPIO.setup(self.pins[0], GPIO.OUT)
-        GPIO.setup(self.pins[1], GPIO.IN)
+        GPIO.setup(self.pins[1], GPIO.IN)       
+        # start thread
+        self.__running = True
+        self.__t1=threading.Thread(target=self.__distance)
+        self.__t1.setDaemon(True)
+        self.__t1.start()
+        #print(self.__t1.name)
+    
+    def __del__(self):
+        self.__running= False
+        if self.__t1 is None:
+            return
+        self.__t1.join()
+        
+    def __distance(self):
+        start_time = time.time()
+        end_time = time.time()
+        GPIO.output(self.pins[0], GPIO.LOW)
         time.sleep(0.02)
-        GPIO.output(self.pins[0], GPIO.LOW)
+        while self.__running:           
+            GPIO.output(self.pins[0], GPIO.HIGH)
+            time.sleep(0.0001)
+            GPIO.output(self.pins[0], GPIO.LOW)
+            cnt=0
+            while GPIO.input(self.pins[1]) == GPIO.LOW and cnt<5000:
+                start_time = time.time()
+                cnt=cnt+1
+            cnt=0
+            while GPIO.input(self.pins[1]) == GPIO.HIGH and cnt<5000:
+                end_time = time.time()
+                cnt=cnt+1
+            t = end_time - start_time
+            self.distance = 17150 * t
+            print("Measured Distance is:", self.distance, "cms.")
+            time.sleep(self.__interval)
 
-    def distance(self):
-        GPIO.output(self.pins[0], GPIO.HIGH)
-        time.sleep(0.0001)
-        GPIO.output(self.pins[0], GPIO.LOW)
-        while GPIO.input(self.pins[1]) == GPIO.LOW:
-            start_time = time.time()
-        while GPIO.input(self.pins[1]) == GPIO.HIGH:
-            end_time = time.time()
-        t = end_time - start_time
-        distance = 17150 * t
-        print("Measured Distance is:", distance, "cms.")
-        return distance
 
+class HCSR04(Ultrasonic_Distance):
+    def __init__(self, trigpin, echopin, interval=0.2):
+        super(HCSR04, self).__init__(trigpin, echopin, interval)
+
+class HYSRF05(Ultrasonic_Distance):
+    def __init__(self, trigpin, echopin, interval=0.2):
+        super(HYSRF05, self).__init__(trigpin, echopin, interval)
 
 class InfraredObstacle(Sensor):
     '''
