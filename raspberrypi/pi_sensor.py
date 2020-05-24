@@ -17,21 +17,29 @@ class Sensor(object):
     def __init__(self, pins):
         self.pins = pins
 
-class Servo(Sensor):
-    
-    pwm=None
+class Servo(Sensor):    
+    pwm = None
     def __init__(self, pin):
         pins=[pin]
         self.on=False
         super(Servo, self).__init__(pins)
         GPIO.setup(self.pins, GPIO.OUT)
-        self.pwm=GPIO.PWM(self.pins[0],80)
-        self.pwm.start(100)
+        if sefl.pwm is None:
+            self.pwm=GPIO.PWM(self.pins[0],80)
+            self.pwm.start(100)
+            log.debug("Servo pmw started")
+    
+    def __del__(self):
+        if self.pwm is None:
+            return
+        self.pwm.stop()
         
     def angle(self,degree):
+        if self.pwm is None:
+            log.error("Servo pmw is None")
+            return
         self.pwm.ChangeDutyCycle(50)
-        time.sleep(3)
-        self.pwm.stop()
+        log.debug("Servo angle")
         
         
 
@@ -107,7 +115,8 @@ class LED_3461BS(Sensor):
                     
     def show(self,val):
         self.content=str(val)
-        thread.start_new_thread(self.__show_thread,())
+        t1=threading.Thread(target=self.__show_thread)
+        t1.start()
                     
     def off(self):
         self.on=False

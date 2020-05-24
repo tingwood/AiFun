@@ -79,7 +79,7 @@ def test_3461BS():
     time.sleep(5)
     sen.off()
     time.sleep(1)
-    
+   
     
 def main():
     GPIO.setwarnings(False)
