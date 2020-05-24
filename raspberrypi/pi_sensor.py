@@ -3,7 +3,8 @@
 import RPi.GPIO as GPIO
 import time
 import os
-import thread
+import logging as log
+#import thread
 import threading
 
 
@@ -15,6 +16,24 @@ class Sensor(object):
 
     def __init__(self, pins):
         self.pins = pins
+
+class Servo(Sensor):
+    
+    pwm=None
+    def __init__(self, pin):
+        pins=[pin]
+        self.on=False
+        super(Servo, self).__init__(pins)
+        GPIO.setup(self.pins, GPIO.OUT)
+        self.pwm=GPIO.PWM(self.pins[0],80)
+        self.pwm.start(100)
+        
+    def angle(self,degree):
+        self.pwm.ChangeDutyCycle(50)
+        time.sleep(3)
+        self.pwm.stop()
+        
+        
 
 class LED_3461BS(Sensor):
     '''
@@ -219,26 +238,21 @@ class Tracker(Sensor):
     if the reflection is strong enough, output GPIO.HIGH
     otherwise output GPIO.LOW (e.g. detect black line)
     '''
-    ontrack = 1
-    offtrack = 0
+    val = 1
     def __init__(self, pin, reverse=False):
         pins = [pin]
-        self.ontrack = (reverse==False) and 1 or 0
-        self.offtrack = (reverse==True) and 1 or 0
+        self.val = (reverse==False) and 1 or 0
         super(Tracker, self).__init__(pins)
         GPIO.setup(self.pins, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
         
     def ontrack(self):
-        if GPIO.input(self.pins[0]) == self.ontrack:
+        if GPIO.input(self.pins[0]) == self.val:
             return True
         else:
             return False
             
     def offtrack(self):
-        if GPIO.input(self.pins[0]) == self.offtrack:
-            return True
-        else:
-            return False
+        return not(self.ontrack)
 
 class DHT111(Sensor):
     '''
@@ -393,7 +407,7 @@ class Ultrasonic_Distance(Sensor):
     https://blog.csdn.net/weixin_41860080/article/details/86766856
     HY-SRF05 HY-SR04
     '''
-    distance = 0.0
+
     __running = False
     __t1 = None
     __interval=0.2
@@ -404,13 +418,10 @@ class Ultrasonic_Distance(Sensor):
             self.__interval = interval
         super(Ultrasonic_Distance, self).__init__(pins)
         GPIO.setup(self.pins[0], GPIO.OUT)
-        GPIO.setup(self.pins[1], GPIO.IN)       
-        # start thread
-        self.__running = True
-        self.__t1=threading.Thread(target=self.__distance)
-        self.__t1.setDaemon(True)
-        self.__t1.start()
-        #print(self.__t1.name)
+        GPIO.setup(self.pins[1], GPIO.IN)    
+        time.sleep(0.02)  
+        GPIO.output(self.pins[0], GPIO.LOW)
+        time.sleep(1)
     
     def __del__(self):
         self.__running= False
@@ -418,27 +429,22 @@ class Ultrasonic_Distance(Sensor):
             return
         self.__t1.join()
         
-    def __distance(self):
-        start_time = time.time()
-        end_time = time.time()
+    def get_distance(self):
+        GPIO.output(self.pins[0], GPIO.HIGH)
+        time.sleep(0.0001)
         GPIO.output(self.pins[0], GPIO.LOW)
-        time.sleep(0.02)
-        while self.__running:           
-            GPIO.output(self.pins[0], GPIO.HIGH)
-            time.sleep(0.0001)
-            GPIO.output(self.pins[0], GPIO.LOW)
-            cnt=0
-            while GPIO.input(self.pins[1]) == GPIO.LOW and cnt<5000:
-                start_time = time.time()
-                cnt=cnt+1
-            cnt=0
-            while GPIO.input(self.pins[1]) == GPIO.HIGH and cnt<5000:
-                end_time = time.time()
-                cnt=cnt+1
-            t = end_time - start_time
-            self.distance = 17150 * t
-            print("Measured Distance is:", self.distance, "cms.")
-            time.sleep(self.__interval)
+        #cnt=0
+        while GPIO.input(self.pins[1]) == GPIO.LOW:
+            start_time = time.time()
+            #cnt=cnt+1
+        #cnt=0
+        while GPIO.input(self.pins[1]) == GPIO.HIGH:
+            end_time = time.time()
+            #cnt=cnt+1
+        t = end_time - start_time
+        distance = 17150 * t
+        log.debug("Measured Distance is: %s cms", distance)
+        return distance
 
 
 class HCSR04(Ultrasonic_Distance):
