@@ -23,7 +23,7 @@ LTRK=12
 RTRK=24
 SERVO=26
 
-INIT=0
+START=0
 STOP=10
 FORWARD=11
 BACKWARD=12
@@ -75,8 +75,8 @@ def stop():
 	log.info("Stop")
 	GPIO.output([IN1,IN2,IN3,IN4], GPIO.LOW)
 
-def init():
-	status = INIT
+def start():
+	status = START
 	GPIO.output([IN1,IN2,IN3,IN4], GPIO.LOW)
 	
 def forward(interval):	
@@ -114,7 +114,7 @@ def turn_right(interval):
 
 def do_cmd(cmd):
 	interval = 0.1
-	if status == INIT:
+	if status == START:
 		return
 	if cmd == STOP:
 		stop()
@@ -153,7 +153,7 @@ def __do_thread_func():
 		do_cmd(command)
 
 def __init(): 
-    init()
+    start()
     # start sensor thread
     __sensor_running = True
     sen_thread = threading.Thread(target=__sen_thread_func, args=0.01)
@@ -172,7 +172,7 @@ def destroy():
 	# stop sensor thread
 	__sensor_running = False
 	
-	init()
+	start()
 
 if __name__ == '__main__':
     log.basicConfig(level=log.INFO)
@@ -180,15 +180,15 @@ if __name__ == '__main__':
     
     with Board() as board:
         board.button.wait_for_press()
-        if status == INIT:
+        if status == START:
             forward()	# start to forward
             board.led.state = Led.ON
         else:
-	    init()
+	    start()
             board.led.state = Led.OFF
         
         board.button.wait_for_press()
-        init()
+        start()
         board.led.state = Led.OFF
   
 	destroy()
