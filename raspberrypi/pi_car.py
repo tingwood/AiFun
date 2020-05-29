@@ -175,21 +175,18 @@ def destroy():
 	start()
 
 if __name__ == '__main__':
-    log.basicConfig(level=log.INFO)
-    __init()
-    
-    with Board() as board:
-        board.button.wait_for_press()
-        if status == START:
-            forward()	# start to forward
-            board.led.state = Led.ON
-        else:
-	    start()
-            board.led.state = Led.OFF
-        
-        board.button.wait_for_press()
-        start()
-        board.led.state = Led.OFF
-  
+	log.basicConfig(level=log.INFO)
+	__init()
+	with Board() as board:
+		board.button.wait_for_press()
+		if status == START:
+			forward()	# start to forward
+			board.led.state = Led.ON
+		else:
+			start()
+			board.led.state = Led.OFF
+		board.button.wait_for_press()
+		start()
+		board.led.state = Led.OFF
 	destroy()
-    exit(0)
+	exit(0)
