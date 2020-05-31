@@ -1,6 +1,11 @@
 # -*- coding: UTF-8 -*-
 import os
 import json
+from pi_sensor import LED_3461BS
+import RPi.GPIO as GPIO
+import time
+
+
 
 # Return CPU temperature as a float
 def getCPUtemperature():
@@ -48,7 +53,33 @@ def getPiInfo():
     RaspiInfo['DISKinfo'] = getDiskinfo()
     #RaspiInfo['CPUuse'] = getCPUinfo()
     return RaspiInfo
+    
+def fanCtrl():
+    GPIO.setwarnings(False)
+    GPIO.setmode(GPIO.BCM)
+    
+    '''
+     1  a  f  2  3  b 
+     e  d  dp c  g  4
+    '''    
+    led=LED_3461BS(19,11,12,20,21,13,7,16,26,6,5,8)
+    pin = 14
+    GPIO.setup(pin, GPIO.OUT)
+    on = False
+    
+    temp=getCPUtemperature()    
+    if temp>=50:
+        GPIO.output(pin, on)
+        led.show('On')
+    if temp<42:
+        GPIO.output(pin, not(on))
+        led.show('Off')
+    
+    time.sleep(3)
+    led.off()
+    time.sleep(1)
 
+    
 if __name__ == '__main__':
-    # 必须转化为标准 JSON 格式备用，下文有解释
     print(json.dumps(getPiInfo()))
+    fanCtrl()

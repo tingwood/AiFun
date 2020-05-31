@@ -83,7 +83,7 @@ class LED_3461BS(Sensor):
         pins=[a,b,c,d,e,f,g,dp,d1,d2,d3,d4]
         self.on=False
         super(LED_3461BS, self).__init__(pins)
-        GPIO.setup(self.pins, GPIO.OUT)#, pull_up_down=GPIO.PUD_DOWN)
+        GPIO.setup(self.pins, GPIO.OUT , initial=GPIO.LOW)
     
     def __show_char(self,ch,dp=False):        
         val = self.seg_asc[ord(ch)]        
@@ -124,6 +124,7 @@ class LED_3461BS(Sensor):
                     
     def off(self):
         self.on=False
+        GPIO.output(self.pins, GPIO.LOW)
         
 class DS18B20():
     '''
