@@ -21,13 +21,13 @@ class Servo(Sensor):
     pwm = None
     def __init__(self, pin):
         pins=[pin]
-        self.on=False
         super(Servo, self).__init__(pins)
         GPIO.setup(self.pins, GPIO.OUT)
-        if sefl.pwm is None:
-            self.pwm=GPIO.PWM(self.pins[0],80)
-            self.pwm.start(100)
-            log.debug("Servo pmw started")
+        if self.pwm is None:
+            self.pwm=GPIO.PWM(self.pins[0],50)
+            log.debug("Servo pmw inited.")
+            
+            
     
     def __del__(self):
         if self.pwm is None:
@@ -38,8 +38,12 @@ class Servo(Sensor):
         if self.pwm is None:
             log.error("Servo pmw is None")
             return
-        self.pwm.ChangeDutyCycle(50)
-        log.debug("Servo angle")
+        self.pwm.start(2.5)
+        dc = degree / 18. + 2.5
+        self.pwm.ChangeDutyCycle(dc)
+        time.sleep(1)
+        self.pwm.stop()
+        log.debug("Servo angle %s", degree)
         
         
 
@@ -416,10 +420,12 @@ class Ultrasonic_Distance(Sensor):
     https://blog.csdn.net/weixin_41860080/article/details/86766856
     HY-SRF05 HY-SR04
     '''
-
     __running = False
     __t1 = None
     __interval=0.2
+    __stime=0.
+    __etime=0.
+    __measuring = False
     
     def __init__(self, trigpin, echopin, interval=0.2):
         pins = [trigpin, echopin]
@@ -430,15 +436,30 @@ class Ultrasonic_Distance(Sensor):
         GPIO.setup(self.pins[1], GPIO.IN)    
         time.sleep(0.02)  
         GPIO.output(self.pins[0], GPIO.LOW)
-        time.sleep(1)
+        time.sleep(0.5)
+        #GPIO.add_event_detect(self.pins[1], GPIO.BOTH)
+        #GPIO.add_event_callback(self.pins[1], self.__timer)
     
     def __del__(self):
         self.__running= False
         if self.__t1 is None:
             return
         self.__t1.join()
+    
+    def __timer(self,chn):
+        if not(self.__measuring):
+            return
+        if GPIO.input(chn) == GPIO.LOW:
+            self.etime=time.time()
+            self.__measuring = False
+        else:
+            self.stime=time.time()
+        
         
     def get_distance(self):
+        start_time = 0.
+        end_time = 0.
+        distance = -1
         GPIO.output(self.pins[0], GPIO.HIGH)
         time.sleep(0.0001)
         GPIO.output(self.pins[0], GPIO.LOW)
@@ -451,8 +472,32 @@ class Ultrasonic_Distance(Sensor):
             end_time = time.time()
             #cnt=cnt+1
         t = end_time - start_time
-        distance = 17150 * t
-        log.debug("Measured Distance is: %s cms", distance)
+        if t > 0 and start_time>0 and end_time>0:
+            distance = 17150 * t
+            log.debug("Measured Distance is: %s cms", distance)
+        else:
+            log.debug("Measured distance failed")
+        return distance
+    
+    def __start(self):
+        self.__measuring = True
+        self.stime=0.
+        self.etime=0.
+        
+    def get_distance1(self):
+        GPIO.output(self.pins[0], GPIO.HIGH)
+        time.sleep(0.0001)
+        self.__start()
+        GPIO.output(self.pins[0], GPIO.LOW)
+        #time.sleep(0.05)
+        distance = -1
+        print (self.stime, self.etime)
+        if self.etime>0 and self.stime>0:
+            t = self.etime - self.stime
+            distance = 17150 * t
+            log.debug("Measured Distance is: %s cms", distance)            
+        else:
+            log.debug("Measured Distance failed")
         return distance
 
 

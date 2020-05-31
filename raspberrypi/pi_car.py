@@ -2,7 +2,7 @@
 # -*- coding: UTF-8 -*-
 import RPi.GPIO as GPIO
 import time
-import logging as log
+import logging
 from pi_sensor import Tracker,HCSR04,Servo
 import threading
 from aiy.board import Board,Led
@@ -23,7 +23,7 @@ LTRK=12
 RTRK=24
 SERVO=26
 
-START=0
+RESET=0
 STOP=10
 FORWARD=11
 BACKWARD=12
@@ -32,161 +32,190 @@ TURNRIGHT=14
 TURN=15	# random turn
 
 status = 0
-command = 0
-__sensor_running = False
-__do_running = False
+distance = 0.
+__sensor_running = True
+__do_running = True
 
 hcsr04 = HCSR04(TRIG, ECHO)
 lTrk= Tracker(LTRK)
 rTrk= Tracker(RTRK)
-servo=Servo(SERVO)
+#servo=Servo(SERVO)
 #servo1.angle(30)
 
-GPIO.setup([ENA,ENB,IN1,IN2,IN3,IN4], GPIO.OUT ,inital=GPIO.LOW)
-pwmA=GPIO.PWM(ENA,100)
-pwmB=GPIO.PWM(ENB,100)
+GPIO.setup([ENA,ENB,IN1,IN2,IN3,IN4], GPIO.OUT ,initial=GPIO.LOW)
+pwmA=GPIO.PWM(ENA,50)
+pwmB=GPIO.PWM(ENB,50)
 PWMA_DFAULT = 70	# 默认占空比
 PWMB_DFAULT = 90
-pwmA.start(PWMA_DFAULT)    
-pwmB.start(PWMB_DFAULT)
+
 
 def __rotate(pin1, pin2, val):
 	GPIO.output(pin1, val)
-	GPIO.output(pin1, not(val))
+	GPIO.output(pin2, not(val))
 	
 def __right_forward(pwm):
 	pwmA.ChangeDutyCycle(pwm)
-	__rotate(IN1, IN2, GPIO.HIGH)
+	__rotate(IN1, IN2, True)
 
 def __right_backward(pwm):
 	pwmA.ChangeDutyCycle(pwm)
-	__rotate(IN1, IN2, GPIO.LOW)
+	__rotate(IN1, IN2, False)
 	
 def __left_forward(pwm):
 	pwmB.ChangeDutyCycle(pwm)
-	__rotate(IN3, IN4, GPIO.LOW)
+	__rotate(IN3, IN4, False)
 	
 def __left_backward(pwm):
 	pwmB.ChangeDutyCycle(pwm)
-	__rotate(IN3, IN4, GPIO.HIGH)
+	__rotate(IN3, IN4, True)
 
 def stop():
+	global status
 	status = STOP
-	log.info("Stop")
+	logging.info("Stop")
 	GPIO.output([IN1,IN2,IN3,IN4], GPIO.LOW)
 
-def start():
-	status = START
+def reset():
+	global status
+	status = RESET
 	GPIO.output([IN1,IN2,IN3,IN4], GPIO.LOW)
 	
-def forward(interval):	
+def forward():	
+	global status
 	status = FORWARD
-	log.info("Forward")
+	logging.info("Forward")
 	__left_forward(PWMB_DFAULT)
 	__right_forward(PWMA_DFAULT)
-	if interval>0:
-		time.sleep(interval)
 	
-def backward(interval):	
+def backward():	
+	global status
 	status = BACKWARD
-	log.info("Backward")	
+	logging.info("Backward")	
 	__left_backward(PWMB_DFAULT)
 	__right_backward(PWMA_DFAULT)
-	if interval>0:
-		time.sleep(interval)
 
-def turn_left(interval):	
+
+def turn_left():	
+	global status
 	status = TURNLEFT
-	log.info("Trun left")
+	logging.info("Trun left")
 	__left_backward(100)
 	__right_forward(100)
-	if interval>0:
-		time.sleep(interval)
 
-def turn_right(interval):
+def turn_right():
+	global status
 	status = TURNRIGHT
-	log.info("Trun right")
+	logging.info("Trun right")
 	__left_forward(100)
 	__right_backward(100)
-	if interval>0:
-		time.sleep(interval)
 
 
 def do_cmd(cmd):
-	interval = 0.1
-	if status == START:
+	global status
+	if status == RESET:
 		return
 	if cmd == STOP:
 		stop()
 	elif cmd == FORWARD and status != FORWARD:
-		forward(interval)
+		forward()
 	elif cmd == BACKWARD and status != BACKWARD:
-		backward(interval)
+		backward()
 	elif cmd == TURNLEFT and status != TURNLEFT:
-		turn_left(interval)
+		turn_left()
 	elif cmd == TURNRIGHT and status != TURNRIGHT:
-		turn_right(interval)
+		turn_right()
 	elif cmd == TURN and status != TURNLEFT and status != TURNRIGHT:
 		if random.random()<0.5:
-			turn_right(interval)
+			turn_right()
 		else:
-			turn_left(interval)
+			turn_left()
 
 def __sen_thread_func(interval):
-	dist = hcsr04.get_distance()
+	logging.info("sensor thread started")
+	global distance
+	distance = hcsr04.get_distance()	
+	logging.info("Initial distance is %s cms" , distance)
 	while(__sensor_running):
 		temp = hcsr04.get_distance()
-		if abs(temp - dist)/dist<25:
-			dist = temp
-		if dist<15:
-			command = BACKWARD
-		elif dist<50:
-			# found obstacle event
-			command = TURN
-		elif dist>80:
-			# no obstacle event
-			command = FORWARD
+		if temp == -1: # measure failed
+			continue
+		#elif abs(temp - distance)/distance>25: # 
+		#	continue			
+		elif distance < 10 and temp > 2000: # too close, distance invalid
+			temp=1		
+		distance = temp		
 		time.sleep(interval)
+	logging.info("sensor thread finished")
+
+
 		
 def __do_thread_func():
-	while(__move_running):
-		do_cmd(command)
+	global distance
+	logging.info("Do command thread started")
+	while(__do_running):
+		if distance<10:
+			cmd = BACKWARD
+		elif distance<30:
+			# found obstacle event
+			cmd = TURN
+		elif distance>50:
+			# no obstacle event
+			cmd = FORWARD
+		
+		do_cmd(cmd)
+		logging.debug("Do command is %s",cmd)
+		time.sleep(0.1)
+	logging.info("Do command thread finished")
 
-def __init(): 
-    start()
+def init(): 
+    reset()
     # start sensor thread
+    global __sensor_running
     __sensor_running = True
-    sen_thread = threading.Thread(target=__sen_thread_func, args=0.01)
+    sen_thread = threading.Thread(target=__sen_thread_func, args=[0.05])
     #sen_thread.setDaemon(True)
     sen_thread.start()
+    logging.info("sensor thread started")
     
     # start do thread
+    global __do_running
     __do_running = True
     do_thread = threading.Thread(target=__do_thread_func)
+    #do_thread.setDaemon(True)
     do_thread.start()
+    
+    pwmA.start(PWMA_DFAULT)
+    pwmB.start(PWMB_DFAULT)
 
 def destroy():
 	# stop do thread
+	global __do_running
 	__do_running = False	
 	
 	# stop sensor thread
+	global __sensor_running
 	__sensor_running = False
 	
-	start()
+	reset()
+	
+	pwmA.stop()  
+	pwmB.stop()
 
 if __name__ == '__main__':
-	log.basicConfig(level=log.INFO)
-	__init()
+	logging.basicConfig(#filename='./car.log',\
+                        #filemode='w',\
+                        level=logging.INFO)
+	init()
 	with Board() as board:
 		board.button.wait_for_press()
-		if status == START:
+		if status == RESET:
 			forward()	# start to forward
 			board.led.state = Led.ON
 		else:
-			start()
+			reset()
 			board.led.state = Led.OFF
 		board.button.wait_for_press()
-		start()
+		reset()
 		board.led.state = Led.OFF
 	destroy()
 	exit(0)

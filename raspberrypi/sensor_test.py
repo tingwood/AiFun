@@ -65,9 +65,8 @@ def test_DS18B20():
     print (sen.get_temperature())
 
 def test_Ultrasonic():
-    sen=sensor.HCSR04(19,11)
-    time.sleep(2)
-    print(sen.distance)
+    sen=sensor.HCSR04(3,2)
+    print(sen.get_distance())
 
 def test_3461BS():
     '''
@@ -79,6 +78,15 @@ def test_3461BS():
     time.sleep(5)
     sen.off()
     time.sleep(1)
+
+def test_servo():
+    servo=sensor.Servo(26)
+    servo.angle(0)
+    time.sleep(2)
+    servo.angle(90)
+    time.sleep(2)
+    servo.angle(180)
+    time.sleep(2)
    
     
 def main():
@@ -89,7 +97,8 @@ def main():
     #test_Tracker()
     #test_DS18B20()
     #test_Ultrasonic()
-    test_3461BS()
+    #test_3461BS()
+    test_servo()
     GPIO.cleanup()
 
 main()
