@@ -77,8 +77,9 @@ class LED_3461BS(Sensor):
     0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff] #240~255
     loc = [0x08,0x04,0x02,0x01]
     #loc = [0x01,0x02,0x04,0x08]
-    on=False
+    on = False
     content=''
+    t1 = None
     def __init__(self, a,b,c,d,e,f,g,dp,d1,d2,d3,d4):
         pins=[a,b,c,d,e,f,g,dp,d1,d2,d3,d4]
         self.on=False
@@ -116,15 +117,19 @@ class LED_3461BS(Sensor):
                     self.__show_loc(i+4-length)
                     self.__show_char(a[i],False)
                     time.sleep(0.004)
+            GPIO.output(self.pins, GPIO.LOW)
                     
     def show(self,val):
         self.content=str(val)
-        t1=threading.Thread(target=self.__show_thread)
-        t1.start()
+        self.t1=threading.Thread(target=self.__show_thread)
+        self.t1.start()
                     
     def off(self):
         self.on=False
-        GPIO.output(self.pins, GPIO.LOW)
+        if self.t1 is None:
+            return
+        self.t1.join()
+        self.t1 = None
         
 class DS18B20():
     '''

@@ -71,13 +71,13 @@ def fanCtrl():
     if temp>=50:
         GPIO.output(pin, on)
         led.show('On')
+        time.sleep(3)
     if temp<42:
         GPIO.output(pin, not(on))
         led.show('Off')
-    
-    time.sleep(3)
+        time.sleep(3)    
+
     led.off()
-    time.sleep(1)
 
     
 if __name__ == '__main__':
