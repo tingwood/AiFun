@@ -3,7 +3,7 @@
 import RPi.GPIO as GPIO
 import time
 import logging
-from pi_sensor import Tracker,HCSR04,Servo
+from pi_sensor import Tracker,HCSR04,Servo,InfraredObstacle
 import threading
 from aiy.board import Board,Led
 import random
@@ -21,6 +21,8 @@ IN4=22
 ENB=7
 LTRK=12
 RTRK=24
+LOBT=13
+ROBT=5
 SERVO=26
 
 RESET=0
@@ -33,12 +35,16 @@ TURN=15	# random turn
 
 status = 0
 distance = 0.
+left_Obt = False
+right_Obt = False
 __sensor_running = True
 __do_running = True
 
 hcsr04 = HCSR04(TRIG, ECHO)
 lTrk= Tracker(LTRK)
 rTrk= Tracker(RTRK)
+lObt= InfraredObstacle(LOBT)
+rObt= InfraredObstacle(ROBT)
 #servo=Servo(SERVO)
 #servo1.angle(30)
 
@@ -133,6 +139,8 @@ def do_cmd(cmd):
 def __sen_thread_func(interval):
 	logging.info("sensor thread started")
 	global distance
+	global left_Obt
+	global right_Obt
 	distance = hcsr04.get_distance()	
 	logging.info("Initial distance is %s cms" , distance)
 	while(__sensor_running):
@@ -143,8 +151,12 @@ def __sen_thread_func(interval):
 		#	continue			
 		elif distance < 10 and temp > 2000: # too close, distance invalid
 			temp=1		
-		distance = temp		
+		distance = temp	
+		
+		left_Obt = lObt.obstacle()	
+		right_Obt = rObt.obstacle()
 		time.sleep(interval)
+		
 	logging.info("sensor thread finished")
 
 
@@ -153,7 +165,11 @@ def __do_thread_func():
 	global distance
 	logging.info("Do command thread started")
 	while(__do_running):
-		if distance<10:
+		if right_Obt:
+			cmd = TURNLEFT
+		elif left_Obt:
+			cmd = TURNRIGHT
+		elif distance<10:
 			cmd = BACKWARD
 		elif distance<30:
 			# found obstacle event
