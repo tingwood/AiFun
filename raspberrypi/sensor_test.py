@@ -68,6 +68,10 @@ def test_Ultrasonic():
     sen=sensor.HCSR04(3,2)
     print(sen.get_distance())
 
+def test_obstacle():
+    sen=sensor.InfraredObstacle(13)
+    print(sen.obstacle())
+
 def test_3461BS():
     '''
      1  a  f  2  3  b 
@@ -98,7 +102,8 @@ def main():
     #test_DS18B20()
     #test_Ultrasonic()
     #test_3461BS()
-    test_servo()
+    #test_servo()
+    test_obstacle()
     GPIO.cleanup()
 
 main()

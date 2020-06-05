@@ -223,15 +223,14 @@ if __name__ == '__main__':
                         level=logging.INFO)
 	init()
 	with Board() as board:
-		board.button.wait_for_press()
-		if status == RESET:
-			forward()	# start to forward
-			board.led.state = Led.ON
-		else:
-			reset()
-			board.led.state = Led.OFF
-		board.button.wait_for_press()
-		reset()
-		board.led.state = Led.OFF
+		board.led.state = Led.ON
+		while (True):
+			board.button.wait_for_press()
+			if status == RESET:
+				forward()	# start to forward
+				board.led.state = Led.OFF
+			else:
+				reset()
+				board.led.state = Led.ON
 	destroy()
 	exit(0)

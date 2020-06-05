@@ -527,6 +527,8 @@ class InfraredObstacle(Sensor):
     def obstacle(self):
         if GPIO.input(self.pins[0]) == GPIO.LOW:
             return True
+        else:
+            return False
 
 
 class TouchSwitcher(Sensor):
