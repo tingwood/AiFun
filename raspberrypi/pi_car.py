@@ -160,12 +160,11 @@ def __sen_thread_func(interval):
         elif distance < 10 and temp > 2000:  # too close, distance invalid
             temp = 1
         distance = temp
-		
-		obstacle = 0
-		if lObt.detected():
-			obstacle = obstacle | 0x01
-		if rObt.detected():
-			obstacle = obstacle | 0x02
+        obstacle = 0
+        if lObt.detected():
+            obstacle = obstacle | 0x01
+        if rObt.detected():
+            obstacle = obstacle | 0x02
         time.sleep(interval)
 
     logging.info("sensor thread finished")
@@ -180,8 +179,7 @@ def __do_thread_func():
         elif obstacle == 0x01:
             cmd = TURNRIGHT
         elif obstacle == 0x10:
-			cmd = TURNLEFT
-			
+            cmd = TURNLEFT
         elif distance < 10:
             cmd = BACKWARD
         elif distance < 30:
