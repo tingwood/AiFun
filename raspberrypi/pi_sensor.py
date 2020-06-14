@@ -174,47 +174,6 @@ class DS18B20():
         return temperature
 
 
-class SoilSensor(Sensor):
-    '''
-    Soil humidity sensor
-    dry: output GPIO.HIGH
-    wet: output GPIO.LOW (DO-LED will light)
-    '''
-    sample = 20  # sample times
-    dry_th = 0  # dry threshold
-    wet_th = 0  # wet threshold
-
-    def __init__(self, pin, sample=20):
-        pins = [pin]
-        super(SoilSensor, self).__init__(pins)
-        if sample > 0:
-            self.sample = sample
-        self.dry_th = sample * 0.8
-        self.wet_th = sample * 0.2
-        GPIO.setup(self.pins, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-
-    def isdry(self):
-        val = 0
-        for i in range(0, self.sample):
-            val += GPIO.input(self.pins[0])
-            time.sleep(0.2)
-
-        if val >= self.dry_th:  # dry
-            return True
-        else:
-            return False
-
-    def iswet(self):
-        val = 0
-        for i in range(0, self.sample):
-            val += GPIO.input(self.pins[0])
-            time.sleep(0.2)
-
-        if val <= self.wet_th:  # wet
-            return True
-        else:
-            return False
-
 
 class Relay(Sensor):
     '''
@@ -502,10 +461,10 @@ class OnePinSensor(Sensor):
     the base class of one input sensor
     '''
 
-    def __init__(self, pin, pull_up_down=GPIO.PUD_UP):
+    def __init__(self, pin, pull_mode=GPIO.PUD_UP):
         pins = [pin]
         super(OnePinSensor, self).__init__(pins)
-        GPIO.setup(self.pins, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+        GPIO.setup(self.pins, GPIO.IN, pull_up_down=pull_mode)
 
     def isLow(self):
         if GPIO.input(self.pins[0]) == GPIO.LOW:
@@ -516,7 +475,46 @@ class OnePinSensor(Sensor):
     def isHigh(self):
         return not(self.isLow())
 
+class SoilSensor(OnePinSensor):
+    '''
+    Soil humidity sensor
+    dry: output GPIO.HIGH
+    wet: output GPIO.LOW (DO-LED will light)
+    '''
+    sample = 10  # sample times
+    dry_th = 8  # dry threshold
+    wet_th = 2  # wet threshold
 
+    def __init__(self, pin):
+        super(SoilSensor, self).__init__(pin, GPIO.PUD_DOWN)
+        #if sample > 0:
+        #    self.sample = sample
+        #    self.dry_th = sample * 0.8
+        #    self.wet_th = sample * 0.2
+    
+    def __measure(self):
+        val = 0
+        for i in range(0, self.sample):
+            val += GPIO.input(self.pins[0])
+            time.sleep(0.01)
+        return val
+        
+    def isDry(self):
+        val = self.__measure()
+
+        if val >= self.dry_th:  # dry
+            return True
+        else:
+            return False
+
+    def isWet(self):
+        val = self.__measure()
+
+        if val <= self.wet_th:  # wet
+            return True
+        else:
+            return False
+            
 class Tracker(OnePinSensor):
     '''
     Infrared tracker sensor
@@ -528,6 +526,17 @@ class Tracker(OnePinSensor):
         super(Tracker, self).__init__(pin, GPIO.PUD_DOWN)
 
 
+class BodyDetector(OnePinSensor):
+    '''
+    if detect human body, the input is GPIO.LOW
+    '''
+
+    def __init__(self, pin):
+        super(BodyDetector, self).__init__(pin)
+
+    def detected(self):
+        return super(BodyDetector, self).isLow()
+
 class ObjDetector(OnePinSensor):
     '''
     if detect obstacle, the input is GPIO.LOW
@@ -538,7 +547,6 @@ class ObjDetector(OnePinSensor):
 
     def detected(self):
         return super(ObjDetector, self).isLow()
-
 
 class TouchSwitcher(OnePinSensor):
     '''

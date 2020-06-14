@@ -35,8 +35,7 @@ TURN = 15  # random turn
 
 status = 0
 distance = 0.
-left_Obt = False
-right_Obt = False
+obstacle = 0  # 0-no obstacle, 1- left obstacle, 2- right obstacle, 3- l/r both obstacle
 __sensor_running = True
 __do_running = True
 
@@ -149,8 +148,7 @@ def do_cmd(cmd):
 def __sen_thread_func(interval):
     logging.info("sensor thread started")
     global distance
-    global left_Obt
-    global right_Obt
+    global obstacle
     distance = hcsr04.get_distance()
     logging.info("Initial distance is %s cms", distance)
     while(__sensor_running):
@@ -162,9 +160,12 @@ def __sen_thread_func(interval):
         elif distance < 10 and temp > 2000:  # too close, distance invalid
             temp = 1
         distance = temp
-
-        left_Obt = lObt.detected()
-        right_Obt = rObt.detected()
+		
+		obstacle = 0
+		if lObt.detected():
+			obstacle = obstacle | 0x01
+		if rObt.detected():
+			obstacle = obstacle | 0x02
         time.sleep(interval)
 
     logging.info("sensor thread finished")
@@ -174,10 +175,13 @@ def __do_thread_func():
     global distance
     logging.info("Do command thread started")
     while(__do_running):
-        if right_Obt:
-            cmd = TURNLEFT
-        elif left_Obt:
+        if obstacle == 0x11:
+            cmd = BACKWARD
+        elif obstacle == 0x01:
             cmd = TURNRIGHT
+        elif obstacle == 0x10:
+			cmd = TURNLEFT
+			
         elif distance < 10:
             cmd = BACKWARD
         elif distance < 30:
