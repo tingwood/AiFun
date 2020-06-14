@@ -174,11 +174,11 @@ def __do_thread_func():
     global distance
     logging.info("Do command thread started")
     while(__do_running):
-        if obstacle == 0x11:
+        if obstacle == 3:
             cmd = BACKWARD
-        elif obstacle == 0x01:
+        elif obstacle == 1:
             cmd = TURNRIGHT
-        elif obstacle == 0x10:
+        elif obstacle == 2:
             cmd = TURNLEFT
         elif distance < 10:
             cmd = BACKWARD
