@@ -17,24 +17,24 @@ class Sensor(object):
     def __init__(self, pins):
         self.pins = pins
 
-class Servo(Sensor):    
+
+class Servo(Sensor):
     pwm = None
+
     def __init__(self, pin):
-        pins=[pin]
+        pins = [pin]
         super(Servo, self).__init__(pins)
         GPIO.setup(self.pins, GPIO.OUT)
         if self.pwm is None:
-            self.pwm=GPIO.PWM(self.pins[0],50)
+            self.pwm = GPIO.PWM(self.pins[0], 50)
             log.debug("Servo pmw inited.")
-            
-            
-    
+
     def __del__(self):
         if self.pwm is None:
             return
         self.pwm.stop()
-        
-    def angle(self,degree):
+
+    def angle(self, degree):
         if self.pwm is None:
             log.error("Servo pmw is None")
             return
@@ -44,50 +44,50 @@ class Servo(Sensor):
         time.sleep(1)
         self.pwm.stop()
         log.debug("Servo angle %s", degree)
-        
-        
+
 
 class LED_3461BS(Sensor):
     '''
      1  a  f  2  3  b 
      e  d  dp c  g  4
-     
+
       --A--
     F|     |B
       --G--
     E|     |C
       --D--  .DP       
     '''
-    seg_asc=[
-    0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, #0~15
-    0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, #16~31
-    0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xbf,0xff,0xff, #32~47
-    0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90,0xff,0xff,0xff,0xff,0xff,0xff, #48~63
-    0xff,0x88,0x83,0xc6,0xa1,0x86,0x8e,0x90,0x89,0xf9,0xf1,0x8f,0xc7,0xff,0xab,0xa3, #64~79
-    0x8c,0x98,0x88,0x92,0x87,0xc1,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, #80~95
-    0xff,0x88,0x83,0xa7,0xa1,0x86,0x8e,0x90,0x8b,0xf9,0xf1,0x8f,0xc7,0xff,0xab,0xa3, #96~111
-    0x8c,0x98,0x88,0x92,0x87,0xe3,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, #112~127
-    0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, #128~143
-    0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, #144~159
-    0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, #160~175
-    0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, #176~191
-    0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, #192~207
-    0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, #208~223
-    0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, #224~239
-    0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff] #240~255
-    loc = [0x08,0x04,0x02,0x01]
+    seg_asc = [
+        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,  # 0~15
+        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,  # 16~31
+        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xbf, 0xff, 0xff,  # 32~47
+        0xc0, 0xf9, 0xa4, 0xb0, 0x99, 0x92, 0x82, 0xf8, 0x80, 0x90, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,  # 48~63
+        0xff, 0x88, 0x83, 0xc6, 0xa1, 0x86, 0x8e, 0x90, 0x89, 0xf9, 0xf1, 0x8f, 0xc7, 0xff, 0xab, 0xa3,  # 64~79
+        0x8c, 0x98, 0x88, 0x92, 0x87, 0xc1, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,  # 80~95
+        0xff, 0x88, 0x83, 0xa7, 0xa1, 0x86, 0x8e, 0x90, 0x8b, 0xf9, 0xf1, 0x8f, 0xc7, 0xff, 0xab, 0xa3,  # 96~111
+        0x8c, 0x98, 0x88, 0x92, 0x87, 0xe3, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,  # 112~127
+        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,  # 128~143
+        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,  # 144~159
+        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,  # 160~175
+        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,  # 176~191
+        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,  # 192~207
+        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,  # 208~223
+        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,  # 224~239
+        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff]  # 240~255
+    loc = [0x08, 0x04, 0x02, 0x01]
     #loc = [0x01,0x02,0x04,0x08]
     on = False
-    content=''
+    content = ''
     t1 = None
-    def __init__(self, a,b,c,d,e,f,g,dp,d1,d2,d3,d4):
-        pins=[a,b,c,d,e,f,g,dp,d1,d2,d3,d4]
-        self.on=False
+
+    def __init__(self, a, b, c, d, e, f, g, dp, d1, d2, d3, d4):
+        pins = [a, b, c, d, e, f, g, dp, d1, d2, d3, d4]
+        self.on = False
         super(LED_3461BS, self).__init__(pins)
-        GPIO.setup(self.pins, GPIO.OUT , initial=GPIO.LOW)
-    
-    def __show_char(self,ch,dp=False):        
-        val = self.seg_asc[ord(ch)]        
+        GPIO.setup(self.pins, GPIO.OUT, initial=GPIO.LOW)
+
+    def __show_char(self, ch, dp=False):
+        val = self.seg_asc[ord(ch)]
         GPIO.output(self.pins[0], val & 0x01)
         GPIO.output(self.pins[1], val & 0x02)
         GPIO.output(self.pins[2], val & 0x04)
@@ -96,41 +96,42 @@ class LED_3461BS(Sensor):
         GPIO.output(self.pins[5], val & 0x20)
         GPIO.output(self.pins[6], val & 0x40)
         #GPIO.output(self.pins[7], val & 0x80)
-        GPIO.output(self.pins[7], not(dp))   #dp
-        
+        GPIO.output(self.pins[7], not(dp))  # dp
+
     def __show_loc(self, index):
-        loc=self.loc[index]
+        loc = self.loc[index]
         GPIO.output(self.pins[8], loc & 0x08)
         GPIO.output(self.pins[9], loc & 0x04)
         GPIO.output(self.pins[10], loc & 0x02)
         GPIO.output(self.pins[11], loc & 0x01)
-    
+
     def __show_thread(self):
-        self.on=True
+        self.on = True
         a = self.content
-        length=len(a)
-        if length>4:
+        length = len(a)
+        if length > 4:
             return
         else:
             while(self.on):
-                for i in range(0,length):                
+                for i in range(0, length):
                     self.__show_loc(i+4-length)
-                    self.__show_char(a[i],False)
+                    self.__show_char(a[i], False)
                     time.sleep(0.004)
             GPIO.output(self.pins, GPIO.LOW)
-                    
-    def show(self,val):
-        self.content=str(val)
-        self.t1=threading.Thread(target=self.__show_thread)
+
+    def show(self, val):
+        self.content = str(val)
+        self.t1 = threading.Thread(target=self.__show_thread)
         self.t1.start()
-                    
+
     def off(self):
-        self.on=False
+        self.on = False
         if self.t1 is None:
             return
         self.t1.join()
         self.t1 = None
-        
+
+
 class DS18B20():
     '''
     https://zhuanlan.zhihu.com/p/69890507
@@ -147,14 +148,14 @@ class DS18B20():
     pi@raspberrypi:/sys/bus/w1/devices/28-000004d618fa $ cat w1_slave
     '''
     serial = ''
-    calib = 0  #calibration of sensor
+    calib = 0  # calibration of sensor
 
     def __init__(self, serial, calib):
         self.serial = serial
         self.calib = calib
 
     def get_temperature(self):
-        fpath="/sys/bus/w1/devices/" + self.serial + "/w1_slave"
+        fpath = "/sys/bus/w1/devices/" + self.serial + "/w1_slave"
         if not os.path.exists(fpath):
             return -50
         tfile = open(fpath)
@@ -169,7 +170,7 @@ class DS18B20():
         # The first two characters are "t=", so get rid of those and convert the temperature from a string to a number.
         temperature = float(temperaturedata[2:])
         # Put the decimal point in the right place and display it.
-        temperature = temperature / 1000 + self.calib 
+        temperature = temperature / 1000 + self.calib
         return temperature
 
 
@@ -232,11 +233,12 @@ class Relay(Sensor):
     A jumpper can be set using GPIO.LOW or GPIO.HIGH to relay trigger
     '''
     reverse = False
+
     def __init__(self, pin, reverse=False):
         pins = [pin]
         super(Relay, self).__init__(pins)
         GPIO.setup(self.pins, GPIO.OUT)
-        self.reverse=reverse
+        self.reverse = reverse
 
     def close(self):
         if self.reverse:
@@ -250,28 +252,6 @@ class Relay(Sensor):
         else:
             GPIO.output(self.pins[0], GPIO.LOW)
 
-            
-class Tracker(Sensor):
-    '''
-    Infrared tracker sensor
-    if the reflection is strong enough, output GPIO.HIGH
-    otherwise output GPIO.LOW (e.g. detect black line)
-    '''
-    val = 1
-    def __init__(self, pin, reverse=False):
-        pins = [pin]
-        self.val = (reverse==False) and 1 or 0
-        super(Tracker, self).__init__(pins)
-        GPIO.setup(self.pins, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-        
-    def ontrack(self):
-        if GPIO.input(self.pins[0]) == self.val:
-            return True
-        else:
-            return False
-            
-    def offtrack(self):
-        return not(self.ontrack)
 
 class DHT111(Sensor):
     '''
@@ -350,6 +330,7 @@ class DHT11(Sensor):
     https://blog.csdn.net/xindoo/article/details/53544699
     GPIO connect to 'Data' pin
     '''
+
     def __init__(self, pin):
         pins = [pin]
         super(DHT11, self).__init__(pins)
@@ -368,7 +349,7 @@ class DHT11(Sensor):
 
         GPIO.setup(pin, GPIO.IN)
 
-        #while GPIO.input(pin) == GPIO.HIGH:
+        # while GPIO.input(pin) == GPIO.HIGH:
         #    continue
         timeout = 5000
         while GPIO.input(pin) == GPIO.LOW and timeout > 0:
@@ -389,7 +370,7 @@ class DHT11(Sensor):
                     break
             data.append(cnt)
             i += 1
-        #print(data)
+        # print(data)
 
         humidity = 0
         humidity_point = 0
@@ -398,7 +379,7 @@ class DHT11(Sensor):
         check = 0
 
         m = [128, 64, 32, 16, 8, 4, 2, 1]
-        th = 15  #threshold
+        th = 15  # threshold
         for i in range(8):
             humidity += (0 if data[i] < th else 1) * m[i]
             humidity_point += (0 if data[i + 8] < th else 1) * m[i]
@@ -420,48 +401,47 @@ class DHT11(Sensor):
         hum, temp = self.get_hum_temp()
         return hum
 
-    
-class Ultrasonic_Distance(Sensor):
+
+class Distancer(Sensor):
     '''
     https://blog.csdn.net/weixin_41860080/article/details/86766856
     HY-SRF05 HY-SR04
     '''
     __running = False
     __t1 = None
-    __interval=0.2
-    __stime=0.
-    __etime=0.
+    __interval = 0.2
+    __stime = 0.
+    __etime = 0.
     __measuring = False
-    
+
     def __init__(self, trigpin, echopin, interval=0.2):
         pins = [trigpin, echopin]
-        if interval>0.01:
+        if interval > 0.01:
             self.__interval = interval
-        super(Ultrasonic_Distance, self).__init__(pins)
+        super(Distancer, self).__init__(pins)
         GPIO.setup(self.pins[0], GPIO.OUT)
-        GPIO.setup(self.pins[1], GPIO.IN)    
-        time.sleep(0.02)  
+        GPIO.setup(self.pins[1], GPIO.IN)
+        time.sleep(0.02)
         GPIO.output(self.pins[0], GPIO.LOW)
         time.sleep(0.5)
         #GPIO.add_event_detect(self.pins[1], GPIO.BOTH)
         #GPIO.add_event_callback(self.pins[1], self.__timer)
-    
+
     def __del__(self):
-        self.__running= False
+        self.__running = False
         if self.__t1 is None:
             return
         self.__t1.join()
-    
-    def __timer(self,chn):
+
+    def __timer(self, chn):
         if not(self.__measuring):
             return
         if GPIO.input(chn) == GPIO.LOW:
-            self.etime=time.time()
+            self.etime = time.time()
             self.__measuring = False
         else:
-            self.stime=time.time()
-        
-        
+            self.stime = time.time()
+
     def get_distance(self):
         start_time = 0.
         end_time = 0.
@@ -469,88 +449,128 @@ class Ultrasonic_Distance(Sensor):
         GPIO.output(self.pins[0], GPIO.HIGH)
         time.sleep(0.0001)
         GPIO.output(self.pins[0], GPIO.LOW)
-        #cnt=0
+        # cnt=0
         while GPIO.input(self.pins[1]) == GPIO.LOW:
             start_time = time.time()
-            #cnt=cnt+1
-        #cnt=0
+            # cnt=cnt+1
+        # cnt=0
         while GPIO.input(self.pins[1]) == GPIO.HIGH:
             end_time = time.time()
-            #cnt=cnt+1
+            # cnt=cnt+1
         t = end_time - start_time
-        if t > 0 and start_time>0 and end_time>0:
+        if t > 0 and start_time > 0 and end_time > 0:
             distance = 17150 * t
             log.debug("Measured Distance is: %s cms", distance)
         else:
             log.debug("Measured distance failed")
         return distance
-    
+
     def __start(self):
         self.__measuring = True
-        self.stime=0.
-        self.etime=0.
-        
+        self.stime = 0.
+        self.etime = 0.
+
     def get_distance1(self):
         GPIO.output(self.pins[0], GPIO.HIGH)
         time.sleep(0.0001)
         self.__start()
         GPIO.output(self.pins[0], GPIO.LOW)
-        #time.sleep(0.05)
+        # time.sleep(0.05)
         distance = -1
-        print (self.stime, self.etime)
-        if self.etime>0 and self.stime>0:
+        print(self.stime, self.etime)
+        if self.etime > 0 and self.stime > 0:
             t = self.etime - self.stime
             distance = 17150 * t
-            log.debug("Measured Distance is: %s cms", distance)            
+            log.debug("Measured Distance is: %s cms", distance)
         else:
             log.debug("Measured Distance failed")
         return distance
 
 
-class HCSR04(Ultrasonic_Distance):
-    def __init__(self, trigpin, echopin, interval=0.2):
-        super(HCSR04, self).__init__(trigpin, echopin, interval)
+class HCSR04(Distancer):
+    def __init__(self, trigpin, echopin):
+        super(HCSR04, self).__init__(trigpin, echopin)
 
-class HYSRF05(Ultrasonic_Distance):
-    def __init__(self, trigpin, echopin, interval=0.2):
-        super(HYSRF05, self).__init__(trigpin, echopin, interval)
 
-class InfraredObstacle(Sensor):
+class HYSRF05(Distancer):
+    def __init__(self, trigpin, echopin):
+        super(HYSRF05, self).__init__(trigpin, echopin)
+
+
+class OnePinSensor(Sensor):
     '''
-    if detect obstacle, the input is GPIO.LOW
+    the base class of one input sensor
     '''
-    def __init__(self, pin):
+
+    def __init__(self, pin, pull_up_down=GPIO.PUD_UP):
         pins = [pin]
-        super(InfraredObstacle, self).__init__(pins)
+        super(OnePinSensor, self).__init__(pins)
         GPIO.setup(self.pins, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
-    def obstacle(self):
+    def isLow(self):
         if GPIO.input(self.pins[0]) == GPIO.LOW:
             return True
         else:
             return False
 
+    def isHigh(self):
+        return not(self.isLow())
 
-class TouchSwitcher(Sensor):
+
+class Tracker(OnePinSensor):
+    '''
+    Infrared tracker sensor
+    if the reflection is strong enough, output GPIO.HIGH
+    otherwise output GPIO.LOW (e.g. detect black line)
+    '''
+
+    def __init__(self, pin):
+        super(Tracker, self).__init__(pin, GPIO.PUD_DOWN)
+
+
+class ObjDetector(OnePinSensor):
+    '''
+    if detect obstacle, the input is GPIO.LOW
+    '''
+
+    def __init__(self, pin):
+        super(ObjDetector, self).__init__(pin)
+
+    def detected(self):
+        return super(ObjDetector, self).isLow()
+
+
+class TouchSwitcher(OnePinSensor):
     '''
     触摸开关
     if touch, the input is GPIO.LOW
     '''
-    status = False
-    callback = None
+    status = False  # false - off, true - on
+    on_callback = None
+    off_callback = None
+    cb_thread = None
+    __running = False
 
-    def __init__(self, pin, callback):
-        pins = [pin]
-        super(TouchSwitcher, self).__init__(pins)
-        GPIO.setup(self.pins, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    def __init__(self, pin, on_cb=None, off_cb=None):
+        super(TouchSwitcher, self).__init__(pin, GPIO.PUD_UP)
         self.status = False
-        self.callback = callback
+        self.on_callback = on_cb
+        self.off_callback = off_cb
+        self.cb_thread=threading.Thread(target=__detect_touch)
+        self.__running=True
+        cb_thread.start()
+
+    def __del__(self):
+        self.__running=True
+        if self.cb_thread is None:
+            return
+        self.cb_thread.join()
 
     def status(self):
         return self.status
 
     def __detect_touch(self):
-        while 1:
+        while (self.__running):
             touch = False
             while GPIO.input(self.pins[0]) == GPIO.HIGH:
                 continue

@@ -69,8 +69,8 @@ def test_Ultrasonic():
     print(sen.get_distance())
 
 def test_obstacle():
-    sen=sensor.InfraredObstacle(13)
-    print(sen.obstacle())
+    sen=sensor.ObjDetector(13)
+    print(sen.detected())
 
 def test_3461BS():
     '''
