@@ -180,35 +180,36 @@ class Relay(Sensor):
     Connection with Raspi:
     VCC(DC+)：5V, pin2 or pin4
     GND(DC-)：GND, pin 6
-    IN：GPIO, pin11 GPIO.LOW or GPIO.HIGH
+    IN：GPIO, default GPIO.HIGH to trig
 
     Output Control：
-    NO： diconnect in usual, connect when trigger
+    NO： normal open
     COM：common
-    NC： connect in usual, disconnect when trigger
+    NC： normal close
 
     Trigger jumpper：
-    A jumpper can be set using GPIO.LOW or GPIO.HIGH to relay trigger
+    A jumpper can be set using GPIO.HIGH or GPIO.LOW to trig relay
     '''
-    reverse = False
+    __trigger_val = False
+    isClose = False
 
     def __init__(self, pin, reverse=False):
         pins = [pin]
         super(Relay, self).__init__(pins)
         GPIO.setup(self.pins, GPIO.OUT)
-        self.reverse = reverse
-
-    def close(self):
-        if self.reverse:
-            GPIO.output(self.pins[0], GPIO.LOW)
+        if reverse:
+            self.__trigger_val = GPIO.LOW
         else:
-            GPIO.output(self.pins[0], GPIO.HIGH)
+            self.__trigger_val = GPIO.HIGH
+
+    def close(self):        
+        GPIO.output(self.pins[0], self.__trigger_val)
+        self.isClose = True
 
     def open(self):
-        if self.reverse:
-            GPIO.output(self.pins[0], GPIO.HIGH)
-        else:
-            GPIO.output(self.pins[0], GPIO.LOW)
+        GPIO.output(self.pins[0], not(self.__trigger_val))
+        self.isClose = False
+    
 
 
 class DHT111(Sensor):
