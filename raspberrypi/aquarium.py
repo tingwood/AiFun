@@ -9,7 +9,7 @@ from pi_sensor import DS18B20, Relay
 
 class Aquarium:
     '''
-    fish tank
+    Aquarium
     '''
     water_temp = 0  # temp get from sensor
     temp_heater_on = 25  # below this temp, heater on
@@ -101,7 +101,6 @@ class Aquarium:
             return
         relay.close()
 
-
     def switchers_off(self, name):
         relay = self._relays[name]
         if relay is None:
@@ -115,17 +114,17 @@ class Aquarium:
         # log.info("light on")
 
     def light_off(self):
-        self.switchers_off('light')  
+        self.switchers_off('light')
         self.light_status = 0
         # log.info("light off")
 
     def pump_on(self):
-        self.switchers_on('pump')    
+        self.switchers_on('pump')
         self.pump_status = 1
         # log.info("pump on")
 
     def pump_off(self):
-        self.switchers_off('pump')       
+        self.switchers_off('pump')
         self.pump_status = 0
         # log.info("pump off")
 

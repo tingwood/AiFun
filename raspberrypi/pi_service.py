@@ -33,7 +33,7 @@ def get_pi_info():
 
 
 @app.route('/aquarium', methods=['GET'])
-def get_fishtank_status():
+def get_aquarium_status():
     global aquarium
     if aquarium is None:
         raise ServiceException("Unsupported")
@@ -41,7 +41,7 @@ def get_fishtank_status():
 
 
 @app.route('/aquarium', methods=['POST'])
-def set_fishtank_runmode():
+def set_aquarium_runmode():
     global aquarium
     if aquarium is None:
         raise ServiceException("Unsupported")
@@ -57,6 +57,28 @@ def set_fishtank_runmode():
     else:
         raise ServiceException("Unsupported action")
     return jsonify(aquarium.get_status())
+
+
+@app.route('/aquarium/light', methods=['POST'])
+def sw_aquarium_light():
+    global aquarium
+    if aquarium is None:
+        raise ServiceException("Unsupported")
+    content = request.get_json(silent=True)
+    action = content.get('action', None)
+    if action is None:
+        raise ServiceException("Illeagal body.")
+    ret = {}
+    if action == 'on':
+        aquarium.light_on()
+        ret['status'] = True
+        return jsonify(ret)
+    elif action == 'off':
+        aquarium.light_off()
+        ret['status'] = False
+        return jsonify(ret)
+    else:
+        raise ServiceException("Unsupported action")
 
 
 class ServiceException(Exception):
