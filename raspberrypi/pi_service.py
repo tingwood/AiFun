@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 # -*- coding: UTF-8 -*-
-from utils import utils
 import os
 import sys
 from flask import Flask, request, jsonify
@@ -13,6 +12,7 @@ import pi_info
 # o_path=os.getcwd()
 fpath = os.path.dirname(os.path.abspath(__file__))  # pi_service dir
 sys.path.append(fpath+"/../")
+from utils import utils
 
 logpath = fpath+'/log'
 utils.mkdirs(logpath)
