@@ -1,5 +1,8 @@
+#!/usr/bin/python3
 # -*- coding: UTF-8 -*-
-import os, sys
+from utils import utils
+import os
+import sys
 from flask import Flask, request, jsonify
 import json
 import logging
@@ -7,28 +10,21 @@ import RPi.GPIO as GPIO
 from aquarium import Aquarium
 import pi_info
 
-#o_path=os.getcwd()
-fpath=os.path.dirname(os.path.abspath(__file__))    #pi_service dir 
+# o_path=os.getcwd()
+fpath = os.path.dirname(os.path.abspath(__file__))  # pi_service dir
 sys.path.append(fpath+"/../")
-from utils import utils
 
-logpath=fpath+'/log'
+logpath = fpath+'/log'
 utils.mkdirs(logpath)
-logging.basicConfig(filename=logpath+'/info.log',\
-                            filemode='w',\
-                            format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',\
-                            datefmt='%H:%M:%S',\
-                            level=logging.INFO)
+logging.basicConfig(filename=logpath+'/info.log',
+                    filemode='w',
+                    format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
+                    datefmt='%H:%M:%S',
+                    level=logging.INFO)
 
 app = Flask(__name__, static_url_path='')
-cfg = dict()    
-with open(fpath+'/pi_service.cfg') as cfgfile:
-    cfg = json.load(cfgfile)
 aquarium = None
-if cfg['aquarium']:
-    GPIO.setwarnings(False)
-    GPIO.setmode(GPIO.BCM)        
-    aquarium = Aquarium()
+
 
 @app.route('/pi/info', methods=['GET'])
 def get_pi_info():
@@ -38,6 +34,7 @@ def get_pi_info():
 
 @app.route('/aquarium', methods=['GET'])
 def get_fishtank_status():
+    global aquarium
     if aquarium is None:
         raise ServiceException("Unsupported")
     return jsonify(aquarium.get_status())
@@ -45,6 +42,7 @@ def get_fishtank_status():
 
 @app.route('/aquarium', methods=['POST'])
 def set_fishtank_runmode():
+    global aquarium
     if aquarium is None:
         raise ServiceException("Unsupported")
     action = request.args.get('action').strip()
@@ -63,6 +61,7 @@ def set_fishtank_runmode():
 
 class ServiceException(Exception):
     status_code = 400
+
     def __init__(self, message, status_code=None, payload=None):
         super(ServiceException, self).__init__(message)
         self.message = message
@@ -83,7 +82,19 @@ def handleServiceExp(error):
     return response
 
 
+def init():
+    global aquarium
+    cfg = dict()
+    with open(fpath+'/pi_service_cfg.json') as cfgfile:
+        cfg = json.load(cfgfile)
+
+    if cfg['aquarium']:
+        GPIO.setwarnings(False)
+        GPIO.setmode(GPIO.BCM)
+        aquarium = Aquarium()
+
+
 if __name__ == '__main__':
-    ip=utils.get_host_ip()
-    app.run(host=ip, port=18082)  #启动socket       
-    
+    init()
+    ip = utils.get_host_ip()
+    app.run(host=ip, port=18082)  # 启动socket

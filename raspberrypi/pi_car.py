@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -*- coding: UTF-8 -*-
 import RPi.GPIO as GPIO
 import time
@@ -148,7 +148,6 @@ def do_cmd(cmd):
 def __sen_thread_func(interval):
     logging.info("sensor thread started")
     global distance
-    global obstacle
     distance = hcsr04.get_distance()
     logging.info("Initial distance is %s cms", distance)
     while(__sensor_running):
@@ -160,14 +159,19 @@ def __sen_thread_func(interval):
         elif distance < 10 and temp > 2000:  # too close, distance invalid
             temp = 1
         distance = temp
-        obstacle = 0
-        if lObt.detected():
-            obstacle = obstacle | 0x01
-        if rObt.detected():
-            obstacle = obstacle | 0x02
+        obs_detect()
         time.sleep(interval)
 
     logging.info("sensor thread finished")
+
+
+def obs_detect():
+    global obstacle
+    obstacle = 0
+    if lObt.detected():
+        obstacle = obstacle | 0x01
+    if rObt.detected():
+        obstacle = obstacle | 0x02
 
 
 def __do_thread_func():

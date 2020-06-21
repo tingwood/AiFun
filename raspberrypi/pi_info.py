@@ -6,7 +6,6 @@ import RPi.GPIO as GPIO
 import time
 
 
-
 # Return CPU temperature as a float
 def getCPUtemperature():
     f = os.popen("cat /sys/class/thermal/thermal_zone0/temp")
@@ -17,11 +16,14 @@ def getCPUtemperature():
 # Index 0: total RAM
 # Index 1: used RAM
 # Index 2: free RAM
+
+
 def getRAMinfo():
     f = os.popen("free | awk '/Mem/ {print $2,$3,$4}'")
     info = f.readline().split()
     info = [round(int(i)/1024, 1) for i in info]
     return info
+
 
 '''
 # Return % of CPU used by user as float
@@ -40,11 +42,14 @@ def getCPUinfo():
 # Index 1: used disk space
 # Index 2: remaining disk space
 # Index 3: percentage of disk used
+
+
 def getDiskinfo():
     f = os.popen("df -h /")
     info = f.readlines()[1].split()[1:5]
-    info[3]=info[3].replace("%","")
+    info[3] = info[3].replace("%", "")
     return info
+
 
 def getPiInfo():
     RaspiInfo = {}
@@ -53,33 +58,34 @@ def getPiInfo():
     RaspiInfo['DISKinfo'] = getDiskinfo()
     #RaspiInfo['CPUuse'] = getCPUinfo()
     return RaspiInfo
-    
+
+
 def fanCtrl():
     GPIO.setwarnings(False)
     GPIO.setmode(GPIO.BCM)
-    
+
     '''
      1  a  f  2  3  b 
      e  d  dp c  g  4
-    '''    
-    led=LED_3461BS(19,11,12,20,21,13,7,16,26,6,5,8)
+    '''
+    led = LED_3461BS(19, 11, 12, 20, 21, 13, 7, 16, 26, 6, 5, 8)
     pin = 14
     GPIO.setup(pin, GPIO.OUT)
     on = False
-    
-    temp=getCPUtemperature()    
-    if temp>=50:
+
+    temp = getCPUtemperature()
+    if temp >= 50:
         GPIO.output(pin, on)
         led.show('On')
         time.sleep(3)
-    if temp<42:
+    if temp < 42:
         GPIO.output(pin, not(on))
         led.show('Off')
-        time.sleep(3)    
+        time.sleep(3)
 
     led.off()
 
-    
+
 if __name__ == '__main__':
     print(json.dumps(getPiInfo()))
     fanCtrl()

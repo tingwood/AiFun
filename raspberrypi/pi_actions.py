@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: UTF-8 -*-
 import RPi.GPIO as GPIO
 import pi_sensor as sensor

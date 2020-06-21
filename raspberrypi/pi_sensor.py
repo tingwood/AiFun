@@ -174,7 +174,6 @@ class DS18B20():
         return temperature
 
 
-
 class Relay(Sensor):
     '''
     Relay:
@@ -475,6 +474,7 @@ class OnePinSensor(Sensor):
     def isHigh(self):
         return not(self.isLow())
 
+
 class SoilSensor(OnePinSensor):
     '''
     Soil humidity sensor
@@ -487,18 +487,18 @@ class SoilSensor(OnePinSensor):
 
     def __init__(self, pin):
         super(SoilSensor, self).__init__(pin, GPIO.PUD_DOWN)
-        #if sample > 0:
+        # if sample > 0:
         #    self.sample = sample
         #    self.dry_th = sample * 0.8
         #    self.wet_th = sample * 0.2
-    
+
     def __measure(self):
         val = 0
         for i in range(0, self.sample):
             val += GPIO.input(self.pins[0])
             time.sleep(0.01)
         return val
-        
+
     def isDry(self):
         val = self.__measure()
 
@@ -514,7 +514,8 @@ class SoilSensor(OnePinSensor):
             return True
         else:
             return False
-            
+
+
 class Tracker(OnePinSensor):
     '''
     Infrared tracker sensor
@@ -537,6 +538,7 @@ class BodyDetector(OnePinSensor):
     def detected(self):
         return super(BodyDetector, self).isLow()
 
+
 class ObjDetector(OnePinSensor):
     '''
     if detect obstacle, the input is GPIO.LOW
@@ -547,6 +549,7 @@ class ObjDetector(OnePinSensor):
 
     def detected(self):
         return super(ObjDetector, self).isLow()
+
 
 class TouchSwitcher(OnePinSensor):
     '''
@@ -564,12 +567,12 @@ class TouchSwitcher(OnePinSensor):
         self.status = False
         self.on_callback = on_cb
         self.off_callback = off_cb
-        self.cb_thread=threading.Thread(target=__detect_touch)
-        self.__running=True
+        self.cb_thread = threading.Thread(target=__detect_touch)
+        self.__running = True
         cb_thread.start()
 
     def __del__(self):
-        self.__running=True
+        self.__running = True
         if self.cb_thread is None:
             return
         self.cb_thread.join()

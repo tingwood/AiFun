@@ -31,7 +31,8 @@ class Aquarium:
 
     def __init__(self):
         self.reload_cfg()
-        self.pump_on()
+        self.set_runmode(0)
+        self.get_temperature()
 
         job = self.scheduler.add_job(self.pump_ext_on, 'cron', hour='15')
         self.jobs.append(job)
@@ -45,12 +46,12 @@ class Aquarium:
         job = self.scheduler.add_job(self.uv_off,
                                      'cron',
                                      #day_of_week='mon',
-                                     hour='15',
-                                     minute='30')
+                                     hour='16',
+                                     #minute='30')
         self.jobs.append(job)
         job = self.scheduler.add_job(self.get_temperature,
                                      'interval',
-                                     minutes=10)
+                                     minutes=5)
         self.jobs.append(job)
         job = self.scheduler.add_job(self.light_on,
                                      'cron',
@@ -218,7 +219,7 @@ class Aquarium:
     def reload_cfg(self):
         fpath=os.path.dirname(os.path.abspath(__file__)) 
         cfg = dict()    
-        with open(fpath+'/aquarium.cfg') as cfgfile:
+        with open(fpath+'/aquarium_cfg.json') as cfgfile:
             cfg = json.load(cfgfile)
         #print(cfg)
         # set light

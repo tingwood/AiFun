@@ -1,0 +1,38 @@
+{
+	"light": {
+		"relay": {
+			"pin": 27,
+			"reverse": false
+		}
+	},
+	"pump": {
+		"relay": {
+			"pin": 0,
+			"reverse": false
+		}
+	},
+	"uvlight": {
+		"relay": {
+			"pin": 17,
+			"reverse": false
+		}
+	},
+	"pumpext": {
+		"relay": {
+			"pin": 18,
+			"reverse": false
+		}
+	},
+	"heater": {
+		"relay": {
+			"pin": 22,
+			"reverse": true
+		},
+		"heater_off_temp": 26,
+		"heater_on_temp": 24
+	},
+	"temp_sensor": {
+		"serial": "28-01191a61480c",
+		"calib": 0
+	}
+}
