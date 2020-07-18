@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -*- coding: UTF-8 -*-
 import RPi.GPIO as GPIO
 import time
@@ -6,6 +6,7 @@ import os
 import logging as log
 #import thread
 import threading
+import Adafruit_DHT
 
 
 class Sensor(object):
@@ -33,6 +34,7 @@ class Servo(Sensor):
         if self.pwm is None:
             return
         self.pwm.stop()
+        self.pwm = None
 
     def angle(self, degree):
         if self.pwm is None:
@@ -74,20 +76,18 @@ class LED_3461BS(Sensor):
         0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,  # 208~223
         0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,  # 224~239
         0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff]  # 240~255
-    loc = [0x08, 0x04, 0x02, 0x01]
+    _loc = [0x08, 0x04, 0x02, 0x01]
     #loc = [0x01,0x02,0x04,0x08]
-    on = False
-    content = ''
-    t1 = None
+    _running = False
+    _work_thread = None
 
     def __init__(self, a, b, c, d, e, f, g, dp, d1, d2, d3, d4):
         pins = [a, b, c, d, e, f, g, dp, d1, d2, d3, d4]
-        self.on = False
+        self._running = False
         super(LED_3461BS, self).__init__(pins)
         GPIO.setup(self.pins, GPIO.OUT, initial=GPIO.LOW)
 
-    def __show_char(self, ch, dp=False):
-        val = self.seg_asc[ord(ch)]
+    def _set_seg_code(self, val):
         GPIO.output(self.pins[0], val & 0x01)
         GPIO.output(self.pins[1], val & 0x02)
         GPIO.output(self.pins[2], val & 0x04)
@@ -95,41 +95,59 @@ class LED_3461BS(Sensor):
         GPIO.output(self.pins[4], val & 0x10)
         GPIO.output(self.pins[5], val & 0x20)
         GPIO.output(self.pins[6], val & 0x40)
-        #GPIO.output(self.pins[7], val & 0x80)
-        GPIO.output(self.pins[7], not(dp))  # dp
+        GPIO.output(self.pins[7], val & 0x80)  # dp
 
-    def __show_loc(self, index):
-        loc = self.loc[index]
+    def _set_loc(self, index):
+        loc = self._loc[index]
         GPIO.output(self.pins[8], loc & 0x08)
         GPIO.output(self.pins[9], loc & 0x04)
         GPIO.output(self.pins[10], loc & 0x02)
         GPIO.output(self.pins[11], loc & 0x01)
 
-    def __show_thread(self):
-        self.on = True
-        a = self.content
-        length = len(a)
+    def _show_thread(self, content):
+        self._running = True
+        # remove dot in string
+        nodot = []
+        length = 0
+        for i in range(0, len(content)):
+            if content[i] != '.':
+                nodot.append(self.seg_asc[ord(content[i])])
+                length = length+1
+            else:
+                nodot[length-1] = nodot[length-1] & 0x7f  # show dp
         if length > 4:
-            return
-        else:
-            while(self.on):
+            nodot = [0xff, 0xff, 0xff, 0xff] + nodot + \
+                [0xff, 0xff, 0xff, 0xff]  # add four space
+            length = length + 4
+            while(self._running):
                 for i in range(0, length):
-                    self.__show_loc(i+4-length)
-                    self.__show_char(a[i], False)
-                    time.sleep(0.004)
-            GPIO.output(self.pins, GPIO.LOW)
+                    val = nodot[i:i+4]
+                    for cnt in range(0, 25):
+                        for j in range(0, 4):
+                            self._set_seg_code(val[j])
+                            self._set_loc(j)
+                            time.sleep(0.003)
+        else:
+            while(self._running):
+                for i in range(0, length):
+                    self._set_seg_code(nodot[i])
+                    self._set_loc(i+4-length)
+                    time.sleep(0.003)
+        GPIO.output(self.pins, GPIO.LOW)
 
     def show(self, val):
-        self.content = str(val)
-        self.t1 = threading.Thread(target=self.__show_thread)
-        self.t1.start()
+        self.off()
+        content = str(val)
+        self._work_thread = threading.Thread(
+            target=self._show_thread, args=[content])
+        self._work_thread.start()
 
     def off(self):
-        self.on = False
-        if self.t1 is None:
+        self._running = False
+        if self._work_thread is None:
             return
-        self.t1.join()
-        self.t1 = None
+        self._work_thread.join()
+        self._work_thread = None
 
 
 class DS18B20():
@@ -155,9 +173,10 @@ class DS18B20():
         self.calib = calib
 
     def get_temperature(self):
+        temperature = -100
         fpath = "/sys/bus/w1/devices/" + self.serial + "/w1_slave"
         if not os.path.exists(fpath):
-            return -50
+            return temperature
         tfile = open(fpath)
         # Read all of the text in the file.
         text = tfile.read()
@@ -202,86 +221,37 @@ class Relay(Sensor):
         else:
             self.__trigger_val = GPIO.HIGH
 
-    def close(self):        
+    def close(self):
         GPIO.output(self.pins[0], self.__trigger_val)
         self.isClose = True
 
     def open(self):
         GPIO.output(self.pins[0], not(self.__trigger_val))
         self.isClose = False
-    
 
 
-class DHT111(Sensor):
+class Ada_DHT11(Sensor):
     '''
     https://blog.csdn.net/xindoo/article/details/53544699
     GPIO connect to 'Data' pin
     '''
-    t_last = 0
-    time_diffs = []
+    sensor = None
 
     def __init__(self, pin):
         pins = [pin]
-        super(DHT111, self).__init__(pins)
-
-    def reset(self):
-        self.time_diffs = []
-        self.t_last = 0
-
-    def record_time(self, pin):
-        t = time.time()
-        self.time_diffs.append(t - self.t_last)
-        self.t_last = t
-        print("detect falling on pin ", pin)
+        super(Ada_DHT11, self).__init__(pins)
+        self.sensor = Adafruit_DHT.DHT11
 
     # return humidity and temperature
     def get_hum_temp(self):
-        pin = self.pins[0]
-        self.reset()
-        data = []
-        GPIO.setup(pin, GPIO.OUT, initial=GPIO.HIGH)
-        time.sleep(0.02)
-        GPIO.output(pin, GPIO.LOW)
-        time.sleep(0.02)
-        GPIO.output(pin, GPIO.HIGH)
-
-        GPIO.setup(pin, GPIO.IN)
-        GPIO.add_event_detect(pin, GPIO.FALLING)
-        GPIO.add_event_callback(pin, self.record_time)
-        time.sleep(1)
-
-        length = len(self.time_diffs)
-        print("length is ", length)
-        if length == 43:
-            for t in self.time_diffs[length - 40:length]:
-                data.append(1 if t > 0.000085 else 0)
-
-            humidity_bit = data[0:8]
-            humidity_point_bit = data[8:16]
-            temperature_bit = data[16:24]
-            temperature_point_bit = data[24:32]
-            check_bit = data[32:40]
-
-            humidity = 0
-            humidity_point = 0
-            temperature = 0
-            temperature_point = 0
-            check = 0
-            m = [128, 64, 32, 16, 8, 4, 2, 1]
-            for i in range(8):
-                humidity += humidity_bit[i] * m[i]
-                humidity_point += humidity_point_bit[i] * m[i]
-                temperature += temperature_bit[i] * m[i]
-                temperature_point += temperature_point_bit[i] * m[i]
-                check += check_bit[i] * m[i]
-
-            tmp = humidity + humidity_point + temperature + temperature_point
-
-            if check == tmp:
-                print("temperature :", temperature, "*C, humidity:", humidity,
-                      "%")
-                return humidity, temperature, True
-        return 0, 0, False
+        humidity, temperature = Adafruit_DHT.read_retry(
+            self.sensor, self.pins[0])
+        if humidity is not None and temperature is not None:
+            #print('Temp={0:0.1f}*C  Humidity={1:0.1f}%'.format(temperature, humidity))
+            return humidity, temperature, True
+        else:
+            #print('Failed to get reading. Try again!')
+            return 0, 0, False
 
 
 class DHT11(Sensor):
@@ -366,8 +336,8 @@ class Distancer(Sensor):
     https://blog.csdn.net/weixin_41860080/article/details/86766856
     HY-SRF05 HY-SR04
     '''
-    __running = False
-    __t1 = None
+    _running = False
+    _work_thread = None
     __interval = 0.2
     __stime = 0.
     __etime = 0.
@@ -387,10 +357,11 @@ class Distancer(Sensor):
         #GPIO.add_event_callback(self.pins[1], self.__timer)
 
     def __del__(self):
-        self.__running = False
-        if self.__t1 is None:
+        self._running = False
+        if self._work_thread is None:
             return
-        self.__t1.join()
+        self._work_thread.join()
+        self._work_thread = None
 
     def __timer(self, chn):
         if not(self.__measuring):
@@ -493,7 +464,7 @@ class SoilSensor(OnePinSensor):
         #    self.dry_th = sample * 0.8
         #    self.wet_th = sample * 0.2
 
-    def __measure(self):
+    def _measure(self):
         val = 0
         for i in range(0, self.sample):
             val += GPIO.input(self.pins[0])
@@ -501,7 +472,7 @@ class SoilSensor(OnePinSensor):
         return val
 
     def isDry(self):
-        val = self.__measure()
+        val = self._measure()
 
         if val >= self.dry_th:  # dry
             return True
@@ -509,7 +480,7 @@ class SoilSensor(OnePinSensor):
             return False
 
     def isWet(self):
-        val = self.__measure()
+        val = self._measure()
 
         if val <= self.wet_th:  # wet
             return True
@@ -558,31 +529,28 @@ class TouchSwitcher(OnePinSensor):
     if touch, the input is GPIO.LOW
     '''
     status = False  # false - off, true - on
-    on_callback = None
-    off_callback = None
-    cb_thread = None
-    __running = False
+    _on_cb = None  # switch on callback
+    _off_cb = None  # switch off callback
+    _cb_thread = None  # callback thread
+    _running = False
 
-    def __init__(self, pin, on_cb=None, off_cb=None):
+    def __init__(self, pin, on_callback=None, off_callback=None):
         super(TouchSwitcher, self).__init__(pin, GPIO.PUD_UP)
         self.status = False
-        self.on_callback = on_cb
-        self.off_callback = off_cb
-        self.cb_thread = threading.Thread(target=__detect_touch)
-        self.__running = True
+        self._on_cb = on_cb
+        self._off_cb = off_cb
+        self._cb_thread = threading.Thread(target=self._touch)
+        self._running = True
         cb_thread.start()
 
     def __del__(self):
-        self.__running = True
+        self._running = False
         if self.cb_thread is None:
             return
         self.cb_thread.join()
 
-    def status(self):
-        return self.status
-
-    def __detect_touch(self):
-        while (self.__running):
+    def _touch(self):
+        while (self._running):
             touch = False
             while GPIO.input(self.pins[0]) == GPIO.HIGH:
                 continue
@@ -596,7 +564,9 @@ class RGBLed(Sensor):
     '''
     RGB Leb light.
     '''
-    on = False
+    _running = False
+    _work_thread = None
+    _light_status = [0, 0, 0]
 
     def __init__(self, rpin, gpin, bpin):
         pins = [rpin, gpin, bpin]
@@ -604,36 +574,142 @@ class RGBLed(Sensor):
         GPIO.setup(self.pins, GPIO.OUT)
 
     def red(self):
-        self.on = True
-        GPIO.output(self.pins, [1, 0, 0])
+        self._light_status = [1, 0, 0]
+        GPIO.output(self.pins, self._light_status)
 
     def green(self):
-        self.on = True
-        GPIO.output(self.pins, [0, 1, 0])
+        self._light_status = [0, 1, 0]
+        GPIO.output(self.pins, self._light_status)
 
     def blue(self):
-        self.on = True
-        GPIO.output(self.pins, [0, 0, 1])
+        self._light_status = [0, 0, 1]
+        GPIO.output(self.pins, self._light_status)
 
     def off(self):
+        self._running = False
+        self._light_status = [0, 0, 0]
+        if self._work_thread is not None:
+            self._work_thread.join()
+            self._work_thread = None
         GPIO.output(self.pins, [0, 0, 0])
-        self.on = False
 
     def red_blink(self, on=0.5, off=0.5):
-        thread.start_new_thread(self.blink, (self.pins[0], on, off))
+        self._light_status = [1, 0, 0]
+        self._start_thread(on, off)
 
     def green_blink(self, on=0.5, off=0.5):
-        thread.start_new_thread(self.blink, (self.pins[1], on, off))
+        self._light_status = [0, 1, 0]
+        self._start_thread(on, off)
 
     def blue_blink(self, on=0.5, off=0.5):
-        thread.start_new_thread(self.blink, (self.pins[2], on, off))
+        self._light_status = [0, 0, 1]
+        self._start_thread(on, off)
 
-    def blink(self, pin, on, off):
-        self.off()
-        time.sleep(0.5)
-        self.on = True
-        while self.on:
-            GPIO.output(pin, 1)
+    def _start_thread(self, on=0.5, off=0.5):
+        if self._work_thread is None:
+            self._work_thread = threading.Thread(
+                target=self._blink, args=[on, off])
+            self._work_thread.start()
+
+    def _blink(self, on, off):
+        self._running = True
+        while self._running:
+            GPIO.output(self.pins, self._light_status)
             time.sleep(on)
-            GPIO.output(pin, 0)
+            GPIO.output(self.pins, [0, 0, 0])
             time.sleep(off)
+
+
+def test_DHT11():
+    dht = Ada_DHT11(4)
+    hum, temp, chk = dht.get_hum_temp()
+
+    if chk:
+        print("temperature :", temp, "*C, humidity:", hum, "%")
+    else:
+        print("check false")
+
+
+def test_relay():
+    GPIO.setwarnings(False)
+    GPIO.setmode(GPIO.BCM)
+
+    relay = Relay(18)
+    relay.trigger()
+    time.sleep(2)
+    relay.untrigger()
+    time.sleep(2)
+    GPIO.cleanup()
+
+
+def test_RGB():
+    rgb = RGBLed(21, 17, 27)
+    rgb.red_blink(0.8, 0.2)
+    time.sleep(10)
+    rgb.green_blink()
+    time.sleep(10)
+    rgb.blue_blink()
+    time.sleep(10)
+    rgb.off()
+
+
+def test_Tracker():
+    sen = Tracker(4)
+    while True:
+        print(sen.reflect())
+        time.sleep(1)
+
+
+def test_DS18B20():
+    sen = DS18B20('28-01191a61480c')
+    print(sen.get_temperature())
+
+
+def test_Ultrasonic():
+    sen = HCSR04(3, 2)
+    print(sen.get_distance())
+
+
+def test_obstacle():
+    sen = ObjDetector(13)
+    print(sen.detected())
+
+
+def test_3461BS():
+    '''
+     1  a  f  2  3  b 
+     e  d  dp c  g  4
+    '''
+    sen = LED_3461BS(19, 11, 12, 20, 21, 13, 7, 16, 26, 6, 5, 8)
+    sen.show('23.88')
+    time.sleep(20)
+    sen.off()
+    time.sleep(1)
+
+
+def test_servo():
+    servo = Servo(26)
+    servo.angle(0)
+    time.sleep(2)
+    servo.angle(90)
+    time.sleep(2)
+    servo.angle(180)
+    time.sleep(2)
+
+
+def test_main():
+    GPIO.setwarnings(False)
+    GPIO.setmode(GPIO.BCM)
+    test_DHT11()
+    # test_RGB()
+    # test_Tracker()
+    # test_DS18B20()
+    # test_Ultrasonic()
+    # test_3461BS()
+    # test_servo()
+    # test_obstacle()
+    GPIO.cleanup()
+
+
+if __name__ == '__main__':
+    test_main()

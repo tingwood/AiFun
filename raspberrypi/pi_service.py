@@ -23,15 +23,13 @@ logging.basicConfig(filename=logpath+'/info.log',
                     level=logging.INFO)
 
 app = Flask(__name__, static_url_path='')
-aquarium = None
-
 
 @app.route('/pi/info', methods=['GET'])
 def get_pi_info():
     info = pi_info.getPiInfo()
     return jsonify(info)
 
-
+aquarium = None
 @app.route('/aquarium', methods=['GET'])
 def get_aquarium_status():
     global aquarium
