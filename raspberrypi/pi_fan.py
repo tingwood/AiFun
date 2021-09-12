@@ -14,8 +14,8 @@ def getCPUtemperature():
     return round(temp, 1)
 
 
-def fanCtrl(fan_pin,on_temp,off_temp):
-    if(on_temp<off_temp):
+def fanCtrl(fan_pin, temp, on_temp, off_temp):
+    if on_temp<=off_temp:
         print("fan on temp must greater than off temp!")
         return
 
@@ -23,19 +23,16 @@ def fanCtrl(fan_pin,on_temp,off_temp):
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(fan_pin, GPIO.OUT)
     on = False
-    state = 'on'
-    temp = getCPUtemperature()
+    state = ''
     if temp >= on_temp:
         GPIO.output(fan_pin, on)
+        state = 'on'
     if temp < off_temp:
         GPIO.output(fan_pin, not(on))
         state = 'off'
+    return state 
+
     
-    info = {}
-    info['CPUtemp'] = temp
-    info['Fan'] = state
-
-
 def showStatus():
     '''
      1  a  f  2  3  b 
@@ -47,5 +44,10 @@ def showStatus():
     led.off()
 
 if __name__ == '__main__':
-    info = fanCtrl(fan_pin=24, on_temp=55, off_temp=50)
+    temp = getCPUtemperature()
+    state = fanCtrl(fan_pin=24, temp=temp, on_temp=55, off_temp=50)
+
+    info = {}
+    info['CPUtemp'] = temp
+    info['Fan'] = state
     print(json.dumps(info))
