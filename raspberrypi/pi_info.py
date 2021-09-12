@@ -61,32 +61,5 @@ def getPiInfo():
     return RaspiInfo
 
 
-def fanCtrl():
-    GPIO.setwarnings(False)
-    GPIO.setmode(GPIO.BCM)
-
-    '''
-     1  a  f  2  3  b 
-     e  d  dp c  g  4
-    '''
-    led = LED_3461BS(19, 11, 12, 20, 21, 13, 7, 16, 26, 6, 5, 8)
-    pin = 14
-    GPIO.setup(pin, GPIO.OUT)
-    on = False
-
-    temp = getCPUtemperature()
-    if temp >= 50:
-        GPIO.output(pin, on)
-        led.show('On')
-        time.sleep(3)
-    if temp < 42:
-        GPIO.output(pin, not(on))
-        led.show('Off')
-        time.sleep(3)
-
-    led.off()
-
-
 if __name__ == '__main__':
     print(json.dumps(getPiInfo()))
-    fanCtrl()
