@@ -17,13 +17,13 @@ def getCPUtemperature():
 def fanCtrl(fan_pin, temp, on_temp, off_temp):
     if on_temp<=off_temp:
         print("fan on temp must greater than off temp!")
-        return
+        return 'err'
 
     GPIO.setwarnings(False)
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(fan_pin, GPIO.OUT)
     on = False
-    state = ''
+    state = '...'
     if temp >= on_temp:
         GPIO.output(fan_pin, on)
         state = 'on'
